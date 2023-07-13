@@ -1,0 +1,20 @@
+.article {
+  max-width: 800px;
+  margin: 24px auto;
+}
+
+.article [data-area="header"] {
+  display: flex;
+}
+
+.article [data-area="header"] h1 {
+  font-size: xx-large;
+}
+
+.article [data-area="header"] img {
+  max-width: 250px;
+}
+
+.article [data-area="content"] img {
+  max-width: 150px;
+}
