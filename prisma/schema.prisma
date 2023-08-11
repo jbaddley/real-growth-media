@@ -7,8 +7,10 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("POSTGRES_PRISMA_URL")
+  provider          = "postgresql"
+  url               = env("POSTGRES_PRISMA_URL") // uses connection pooling
+  directUrl         = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
+  shadowDatabaseUrl = env("POSTGRES_URL_NON_POOLING") // used for migrations
 }
 
 model Account {
@@ -63,6 +65,7 @@ model User {
   sessions       Session[]
   organizationId String?       @db.Uuid
   roles          Role[]
+  Ad             Ad[]
 }
 
 model VerificationToken {
@@ -71,4 +74,39 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model Ad {
+  id        String       @id @default(uuid()) @db.Uuid
+  user      User         @relation(fields: [userId], references: [id])
+  titles    AdTitle[]
+  copy      AdCopy[]
+  creatives AdCreative[]
+  userId    String       @db.Uuid
+}
+
+model AdCopy {
+  id      String  @id @default(uuid()) @db.Uuid
+  email   String
+  content String  @default("")
+  Ad      Ad?     @relation(fields: [adId], references: [id])
+  adId    String? @db.Uuid
+}
+
+model AdCreative {
+  id      String  @id @default(uuid()) @db.Uuid
+  email   String
+  content String  @default("")
+  Ad      Ad?     @relation(fields: [adId], references: [id])
+  adId    String? @db.Uuid
+}
+
+model AdTitle {
+  id          String  @id @default(uuid()) @db.Uuid
+  email       String
+  preHeadline String  @default("")
+  headline    String  @default("")
+  subHeadline String  @default("")
+  Ad          Ad?     @relation(fields: [adId], references: [id])
+  adId        String? @db.Uuid
 }
