@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
 import { writeTitles } from "../../../lib/writeAds";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { auth } from "@clerk/nextjs";
 
 export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
+  const { userId } = auth();
 
-  if (!session) {
+  if (!userId) {
     return NextResponse.json({ message: "You are not logged in.", status: "error" });
   }
   const { context } = await req.json();
