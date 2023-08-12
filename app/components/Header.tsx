@@ -1,21 +1,32 @@
 import Link from "next/link";
 import SignInButton from "./SignInButton";
-import Image from "next/image";
 import logo from "../assets/rgm-logo.png";
+import Image from "next/image";
 
 const Header = () => {
   return (
-    <header className='flex h-24 flex-col justify-center bg-slate-900'>
-      <nav className='container'>
-        <ul className='flex items-center justify-between gap-8 font-medium tracking-wider text-stone-100'>
-          <Image src={logo} alt='Real Growth Media' height={64} />
-          <li className='text-sm'>
-            <Link href='https://realgrowth.media'>Main Site</Link>
-          </li>
+    <header className='flex h-24 flex-col justify-center bg-black'>
+      <nav className='container flex p-4'>
+        <ul className='flex grow gap-8 font-medium tracking-wider text-stone-100'>
           <li>
-            <SignInButton />
+            <Link href='https://realgrowth.media'>
+              <Image src={logo} alt='RGM Logo' height={48} />
+            </Link>
+          </li>
+          <li className='py-4'>
+            <Link className='leading-6' href='/'>
+              Pro Peak AI
+            </Link>
+          </li>
+          <li className='py-4'>
+            <Link className='leading-6' href='/modern-advertising-101'>
+              Tutorial
+            </Link>
           </li>
         </ul>
+        <div className='py-4'>
+          <SignInButton />
+        </div>
       </nav>
     </header>
   );

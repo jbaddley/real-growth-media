@@ -1,45 +1,19 @@
 "use client";
-
-import { useCallback, useEffect, useState } from "react";
-import { Fetcher } from "./lib/fetcher";
-
-import { Tabs } from "flowbite-react";
-import BasicTitleCopy from "./components/BasicTitleCopy";
-interface Ad {
-  id: number;
-  title: string;
-  copy: string[];
-  loading?: boolean;
-}
-
-interface Context {
-  context?: string;
-  title?: string;
-}
-
+import Image from "next/image";
+import pplogo from "./assets/ProPeakLogo.png";
+import Link from "next/link";
 export default function Home() {
-  const [context, setContext] = useState<string>(globalThis.localStorage.getItem("pro-peak-ai-context") || "");
-
-  const handleChangeContext = ({ target: { value } }) => {
-    setContext(value);
-  };
-
   return (
     <section className='flex-row'>
-      <div className='container h-48 flex-none'>
-        <h1 className='text-2xl font-semibold tracking-tight'>Pro Peak AI Tool</h1>
-        <h2>Advanced AI Tool For Marketing</h2>
-        <textarea value={context} onChange={handleChangeContext}></textarea>
-      </div>
-      <div className='container'>
-        <Tabs.Group>
-          <Tabs.Item title='Basic Ad Titles'>
-            <BasicTitleCopy context={context} />
-          </Tabs.Item>
-          <Tabs.Item title='Basic Ad Titles'>
-            <BasicTitleCopy context={context} />
-          </Tabs.Item>
-        </Tabs.Group>
+      <h1>Welcome to Pro Peak</h1>
+      <h2>A simple AI tool for creating marketing titles and copy</h2>
+      <div>
+        <Link href='/pro-peak-ai'>
+          <Image src={pplogo} alt='Pro Peak Logo' />
+          Use Our Pro Peak AI Tool
+        </Link>
+        <Link href='/tutorial'>Learn More</Link>
+        <Link href='/moder-advertising-101'>Download Moder Advertising 101</Link>
       </div>
     </section>
   );
