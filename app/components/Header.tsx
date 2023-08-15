@@ -15,12 +15,22 @@ const Header = () => {
           </li>
           <li className='py-4'>
             <Link className='leading-6' href='/'>
+              Home
+            </Link>
+          </li>
+          <li className='py-4'>
+            <Link className='leading-6' href='/pro-peak-ai'>
               Pro Peak AI
             </Link>
           </li>
           <li className='py-4'>
-            <Link className='leading-6' href='/modern-advertising-101'>
+            <Link className='leading-6' href='/video-tutorial'>
               Tutorial
+            </Link>
+          </li>
+          <li className='py-4'>
+            <Link className='leading-6' href='/modern-digital-marketing-101'>
+              Digital Marketing 101
             </Link>
           </li>
         </ul>

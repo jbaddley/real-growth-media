@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["jsonProtocol"]
@@ -8,18 +5,18 @@ generator client {
 
 datasource db {
   provider          = "postgresql"
-  url               = env("POSTGRES_PRISMA_URL") // uses connection pooling
-  directUrl         = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
-  shadowDatabaseUrl = env("POSTGRES_URL_NON_POOLING") // used for migrations
+  url               = env("POSTGRES_PRISMA_URL")
+  directUrl         = env("POSTGRES_URL_NON_POOLING")
+  shadowDatabaseUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
 model User {
   id            String    @id @default(uuid()) @db.Uuid
+  authId        String?
   name          String?
   email         String?   @unique
   emailVerified DateTime?
   image         String?
-  Ad            Ad[]
 }
 
 model VerificationToken {
@@ -30,37 +27,39 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-model Ad {
-  id        String       @id @default(uuid()) @db.Uuid
-  user      User         @relation(fields: [userId], references: [id])
-  titles    AdTitle[]
-  copy      AdCopy[]
-  creatives AdCreative[]
-  userId    String       @db.Uuid
+model Context {
+  id      String    @id @default(uuid()) @db.Uuid
+  email   String
+  name    String
+  data    String
+  options Json?
+  AdTitle AdTitle[]
+  AdCopy  AdCopy[]
 }
 
 model AdCopy {
-  id      String  @id @default(uuid()) @db.Uuid
-  email   String
-  content String  @default("")
-  Ad      Ad?     @relation(fields: [adId], references: [id])
-  adId    String? @db.Uuid
+  id        String  @id @default(uuid()) @db.Uuid
+  email     String
+  context   Context @relation(fields: [contextId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  title     AdTitle @relation(fields: [adTitleId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  content   String  @default("")
+  adTitleId String  @db.Uuid
+  contextId String  @db.Uuid
 }
 
 model AdCreative {
-  id      String  @id @default(uuid()) @db.Uuid
+  id      String @id @default(uuid()) @db.Uuid
   email   String
-  content String  @default("")
-  Ad      Ad?     @relation(fields: [adId], references: [id])
-  adId    String? @db.Uuid
+  content String @default("")
 }
 
 model AdTitle {
-  id          String  @id @default(uuid()) @db.Uuid
+  id          String   @id @default(uuid()) @db.Uuid
   email       String
-  preHeadline String  @default("")
-  headline    String  @default("")
-  subHeadline String  @default("")
-  Ad          Ad?     @relation(fields: [adId], references: [id])
-  adId        String? @db.Uuid
+  context     Context  @relation(fields: [contextId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  preHeadline String   @default("")
+  headline    String   @default("")
+  subHeadline String   @default("")
+  AdCopy      AdCopy[]
+  contextId   String   @db.Uuid
 }

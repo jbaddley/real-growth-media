@@ -1,31 +1,38 @@
 "use client";
-
-import { useState } from "react";
 import { Tabs } from "flowbite-react";
 import BasicTitleCopy from "../../components/BasicTitleCopy";
+import ManageContexts from "../../components/ManageContexts";
+import useSWR from "swr";
+import { useState } from "react";
+import { Fetcher } from "../../lib/fetcher";
+import { Context } from "@prisma/client";
+import { useLocalStorage } from "../../lib/hooks/useLocalStorage";
 
-export default function Home() {
-  const [context, setContext] = useState<string>(globalThis.localStorage.getItem("pro-peak-ai-context") || "");
+export default function ProPeakAIPage() {
+  const [contextId, setContextId] = useLocalStorage<string>("contextId");
 
-  const handleChangeContext = ({ target: { value } }) => {
-    setContext(value);
-  };
-
+  const { data: context, isLoading } = useSWR(["context", contextId], async () => {
+    if (!contextId) {
+      return undefined;
+    }
+    const { data } = await Fetcher.get<Context>(`/api/ai/contexts/${contextId}`);
+    return data;
+  });
   return (
     <section className='flex-row'>
-      <div className='container h-48 flex-none'>
-        <h1 className='text-2xl font-semibold tracking-tight'>Pro Peak AI Tool</h1>
-        <h2>Advanced AI Tool For Marketing</h2>
-        <textarea value={context} onChange={handleChangeContext}></textarea>
+      <div className='mb-8 flex'>
+        <div className='grow'>
+          <h1 className='text-2xl font-semibold tracking-tight'>Pro Peak AI Tool</h1>
+          <p>Simple AI Tool for Generating Marketing Ideas</p>
+        </div>
+        <ManageContexts onChange={setContextId} value={contextId} context={context} />
       </div>
-      <div className='container'>
+      <div>
         <Tabs.Group>
           <Tabs.Item title='Basic Ad Titles'>
-            <BasicTitleCopy context={context} />
+            <BasicTitleCopy contextId={context?.id} />
           </Tabs.Item>
-          <Tabs.Item title='Basic Ad Titles'>
-            <BasicTitleCopy context={context} />
-          </Tabs.Item>
+          <Tabs.Item title='Basic Ad Titles'></Tabs.Item>
         </Tabs.Group>
       </div>
     </section>
