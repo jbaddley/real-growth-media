@@ -1,12 +1,12 @@
 "use client";
 import { Tabs } from "flowbite-react";
-import BasicTitleCopy from "../../components/BasicTitleCopy";
+import AdIdeas from "../../components/AdIdeas";
 import ManageContexts from "../../components/ManageContexts";
 import useSWR from "swr";
-import { useState } from "react";
 import { Fetcher } from "../../lib/fetcher";
 import { Context } from "@prisma/client";
 import { useLocalStorage } from "../../lib/hooks/useLocalStorage";
+import LoadingOverlay from "../../components/LoadingOverlay";
 
 export default function ProPeakAIPage() {
   const [contextId, setContextId] = useLocalStorage<string>("contextId");
@@ -19,7 +19,8 @@ export default function ProPeakAIPage() {
     return data;
   });
   return (
-    <section className='flex-row'>
+    <section className='relative flex-row'>
+      <LoadingOverlay loading={isLoading} />
       <div className='mb-8 flex'>
         <div className='grow'>
           <h1 className='text-2xl font-semibold tracking-tight'>Pro Peak AI Tool</h1>
@@ -29,8 +30,8 @@ export default function ProPeakAIPage() {
       </div>
       <div>
         <Tabs.Group>
-          <Tabs.Item title='Basic Ad Titles'>
-            <BasicTitleCopy contextId={context?.id} />
+          <Tabs.Item title='Ad Ideas'>
+            <AdIdeas contextId={context?.id} />
           </Tabs.Item>
           <Tabs.Item title='Basic Ad Titles'></Tabs.Item>
         </Tabs.Group>

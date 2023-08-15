@@ -5,11 +5,10 @@ import { Fetcher } from "../lib/fetcher";
 import useSWR from "swr";
 import { AdCopy, AdTitle } from "@prisma/client";
 import LoadingOverlay from "./LoadingOverlay";
-import { Pagination, TextInput } from "flowbite-react";
+import { Pagination } from "flowbite-react";
 import { FaTrash } from "react-icons/fa";
 import Button from "./Button";
 import { useLocalStorage } from "../lib/hooks/useLocalStorage";
-import { buildQS } from "../lib/query";
 
 interface BasicTitleCopyProps {
   contextId: string;
@@ -17,27 +16,15 @@ interface BasicTitleCopyProps {
 
 export default function BasicTitleCopy({ contextId }: BasicTitleCopyProps) {
   const [titleId, setTitleId] = useLocalStorage<string | undefined>("pp-titleId");
-  const [brand, setBrand] = useLocalStorage<string | undefined>("pp-brand");
-  const [model, setModel] = useLocalStorage<string | undefined>("pp-model");
   const [currentPage, setCurrentPage] = useLocalStorage<number>("pp-copyPageNum", 1);
   const [generatingCopyIdeas, setGeneratingCopyIdeas] = useState<boolean>(false);
   const [generatingTitleIdeas, setGeneratingTitleIdeas] = useState<boolean>(false);
-
-  const query = useMemo(() => {
-    return buildQS({
-      brand,
-      model,
-    });
-  }, [brand, model]);
 
   const {
     data: titles = [],
     isLoading: titlesAreLoading,
     mutate: mutateTitles,
   } = useSWR(["titles", contextId], async () => {
-    console.log({ contextId });
-    setTitleId(undefined);
-    setCurrentPage(1);
     if (!contextId) {
       return [];
     }
@@ -49,7 +36,7 @@ export default function BasicTitleCopy({ contextId }: BasicTitleCopyProps) {
     data: copyIdeas,
     isLoading: copyIdeasAreLoading,
     mutate: mutateCopyIdeas,
-  } = useSWR(["copyIdeas", contextId, titleId, query], async () => {
+  } = useSWR(["copyIdeas", contextId, titleId], async () => {
     if (!titleId) {
       return [];
     }
@@ -77,19 +64,19 @@ export default function BasicTitleCopy({ contextId }: BasicTitleCopyProps) {
 
   const handleGenerateCopy = useCallback(() => {
     setGeneratingCopyIdeas(true);
-    Fetcher.get<AdCopy[]>(`/api/ai/contexts/${contextId}/titles/${titleId}/copy/generate?${query}`).then((c) => {
+    Fetcher.get<AdCopy[]>(`/api/ai/contexts/${contextId}/titles/${titleId}/copy/generate`).then((c) => {
       mutateCopyIdeas();
       setGeneratingCopyIdeas(false);
     });
-  }, [titleId, query]);
+  }, [titleId]);
 
   const handleGetTitles = useCallback(() => {
     setGeneratingTitleIdeas(true);
-    Fetcher.get<AdTitle[]>(`/api/ai/contexts/${contextId}/titles/generate?${query}`).then((c) => {
+    Fetcher.get<AdTitle[]>(`/api/ai/contexts/${contextId}/titles/generate`).then((c) => {
       mutateTitles();
-      setGeneratingTitleIdeas(true);
+      setGeneratingTitleIdeas(false);
     });
-  }, [contextId, query]);
+  }, [contextId]);
 
   const totalPages = useMemo(() => {
     return copyIdeas?.length;
@@ -107,18 +94,6 @@ export default function BasicTitleCopy({ contextId }: BasicTitleCopyProps) {
         <Button color='gray' onClick={handleGetTitles}>
           {titles.length ? "More" : "Generate"} Ad Title Ideas
         </Button>
-        <TextInput
-          placeholder='brand'
-          value={brand}
-          name='brand'
-          onChange={({ target: { value } }) => setBrand(value)}
-        />
-        <TextInput
-          placeholder='model'
-          value={model}
-          name='model'
-          onChange={({ target: { value } }) => setModel(value)}
-        />
       </div>
       <div className='flex h-screen'>
         <div className='relative w-1/4 overflow-y-auto bg-gray-200'>

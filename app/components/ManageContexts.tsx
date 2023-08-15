@@ -117,6 +117,20 @@ function ManageContexts({
     });
   };
 
+  const handleCloneContext = async () => {
+    const { name, id, ...rest } = context;
+    const { data } = await Fetcher.post<Context, Partial<Context>>("/api/ai/contexts", {
+      ...rest,
+      name: `Copy of ${name}`,
+    });
+    onChange(data.id);
+    setMode("edit");
+    setShowModal(true);
+    Object.entries(data).map(([key, value]) => {
+      setValue(key, value);
+    });
+  };
+
   const handleDeleteContext = async () => {
     await Fetcher.delete(`/api/ai/contexts/${value}`);
     mutate();
@@ -138,6 +152,9 @@ function ManageContexts({
           <Dropdown.Item onClick={handleAddContext}>Add</Dropdown.Item>
           <Dropdown.Item onClick={handleEditContext} disabled={!value}>
             Edit
+          </Dropdown.Item>
+          <Dropdown.Item onClick={handleCloneContext} disabled={!value}>
+            Clone
           </Dropdown.Item>
           <Dropdown.Item onClick={handleDeleteContext} disabled={!value}>
             Delete
@@ -178,6 +195,16 @@ function ManageContexts({
                 id='options.tone'
                 placeholder='communication tone'
                 {...register("options.tone", { required: false })}
+              />
+            </div>
+            <div>
+              <div className='mb-2 block'>
+                <Label htmlFor='options.brand' value='Brand Name' />
+              </div>
+              <TextInput
+                id='options.brand'
+                placeholder='brand name'
+                {...register("options.brand", { required: false })}
               />
             </div>
             <div>
