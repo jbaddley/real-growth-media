@@ -3,68 +3,32 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import RoasCalc, { StorageInput, defaultInput } from "../../components/RoasCalc";
 import { Button, Tabs } from "flowbite-react";
 
-interface ROASInput {
-  costPerLead?: number;
-  conversionRate?: number;
-  leadsPerMonth?: number;
-  netCustomerValuePerMonth?: number;
-  averageCustomerValuePerMonth?: number;
-  expertCostPerMonth?: number;
-}
+const defaultTabs: Record<string, StorageInput> = {
+  defaultTab: {
+    displayName: "ROAS Calc Default",
+    input: {},
+  },
+};
 
-interface ROASOutput {
-  totalMarketingInvestment?: number;
-  totalReturn?: number;
-  roas?: number;
-  roasPercent?: number;
-  roasX?: number;
-  numCustomersPerMonth?: number;
-  payBackPeriod?: number;
-  customerValue?: number;
-  costPerCustomerAcquisition?: number;
-}
+const getInitial = (): Record<string, StorageInput> => {
+  const stored = localStorage.getItem("pp-roas-calc");
+  if (!stored) {
+    return defaultTabs;
+  }
+  return JSON.parse(stored);
+};
 
-function roasCalc({
-  costPerLead = 100,
-  conversionRate = 0.1,
-  leadsPerMonth = 10,
-  netCustomerValuePerMonth = 5000,
-  averageCustomerValuePerMonth = 1,
-  expertCostPerMonth = 0,
-}: ROASInput): ROASOutput {
-  const totalMarketingInvestment = expertCostPerMonth + costPerLead * leadsPerMonth;
-  const customerValue = netCustomerValuePerMonth * averageCustomerValuePerMonth;
-  const numCustomersPerMonth = Math.floor(conversionRate * leadsPerMonth);
-  const totalReturn = customerValue * numCustomersPerMonth;
-  const roas = totalReturn - totalMarketingInvestment;
-  const roasPercent = roas / totalMarketingInvestment;
-  const costPerCustomerAcquisition = totalMarketingInvestment / numCustomersPerMonth;
-  const roasX = customerValue / costPerCustomerAcquisition;
-  const payBackPeriod = costPerCustomerAcquisition / netCustomerValuePerMonth;
-  return {
-    totalMarketingInvestment,
-    customerValue,
-    numCustomersPerMonth,
-    totalReturn,
-    roas,
-    roasPercent,
-    costPerCustomerAcquisition,
-    roasX,
-    payBackPeriod,
-  };
-}
 export default function () {
-  const [tabs, setTabs] = useState<Record<string, StorageInput>>(
-    JSON.parse(localStorage.getItem("pp-roas-calc") || "{}")
-  );
+  const [tabs, setTabs] = useState<Record<string, StorageInput>>(getInitial());
   const [activeTab, setActiveTab] = useState<string>();
 
   const handleAddTab = useCallback(() => {
-    const name = `tab_${Object.keys(tabs).length}`;
+    const count = Object.keys(tabs).length;
+    const name = `tab${count}`;
     const newTabs = { ...tabs };
     newTabs[name] = {
       input: defaultInput,
-      displayName: "New Unnamed",
+      displayName: `ROAS Calc ${count + 1}`,
     };
     setTabs(newTabs);
     setActiveTab(name);
