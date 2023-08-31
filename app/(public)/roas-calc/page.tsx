@@ -84,7 +84,7 @@ export default function () {
     if (contact?.watchedRoas) {
       return <h1>{contact.email}: YOU WATCHED THE VIDEO</h1>;
     }
-    return <h1>YOU DIDN'T WATCH THE VIDEO</h1>;
+    return <h1>{email}: YOU DIDN'T WATCH THE VIDEO</h1>;
   };
 
   return (
