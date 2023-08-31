@@ -3,7 +3,24 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { useEffect } from "react";
+import { Router } from "next/router";
 
+function FacebookPixel() {
+  useEffect(() => {
+    import("react-facebook-pixel")
+      .then((x) => x.default)
+      .then((ReactPixel) => {
+        ReactPixel.init(process.env.FACEBOOKPIXEL_ID);
+        ReactPixel.pageView();
+
+        Router.events.on("routeChangeComplete", () => {
+          ReactPixel.pageView();
+        });
+      });
+  });
+  return null;
+}
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
@@ -26,6 +43,7 @@ export default function RootLayout({ children }) {
     <html lang='en' className={`${inter.className} h-full scroll-smooth antialiased`}>
       <head>
         <link rel='icon' href='/favicon.ico' sizes='any' />
+        <FacebookPixel />
       </head>
       <Provider>
         <body className='flex h-full flex-col'>
