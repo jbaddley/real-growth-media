@@ -140,9 +140,9 @@ export default function ({
     [name]
   );
 
-  const handleCopy = (name: string) => {
+  const handleCopy = (copyName: string) => {
     return () => {
-      const copy = getStorage(name);
+      const copy = getStorage(copyName);
       onChange(name, { displayName: storageInputs.displayName, input: copy.input });
     };
   };
