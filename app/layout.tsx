@@ -2,9 +2,9 @@ import Provider from "./components/Provider";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import { Inter } from "next/font/google";
-import "./globals.css";
 import { FacebookPixelEvents } from "./components/FacebookPixel";
 import { Suspense } from "react";
+import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
 
