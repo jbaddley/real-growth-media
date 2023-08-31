@@ -115,6 +115,44 @@ export async function writeAdvancedTitles(context: Context, num: number = 5): Pr
   return titles;
 }
 
+export async function getBrandIdeas(context: Context, brandPrompt: string, num: number = 5): Promise<string[]> {
+  const prompt = getPromptFromContext(context);
+  const { options } = context;
+  const brand = options["brand"];
+  const model = options["model"];
+  const additionalInfo = [];
+  if (brand) {
+    additionalInfo.push({
+      role: "system",
+      content: `Use the brand name ${brand} to evoke curiosity`,
+    });
+  }
+  if (model) {
+    additionalInfo.push({
+      role: "system",
+      content: `Use the advertising model ${model} as the base strategy`,
+    });
+  }
+  const { data } = await openai.createChatCompletion({
+    model: "gpt-4",
+    messages: [
+      { role: "system", content: `Use the following as context: ${prompt}` },
+      {
+        role: "system",
+        content: `Output the result as a JSON array of strings.`,
+      },
+      ...additionalInfo,
+      {
+        role: "system",
+        content: `Create list of ${num} catchy brand names for ${brandPrompt}`,
+      },
+    ],
+  });
+
+  const titles = JSON.parse(data.choices[0].message.content);
+  return titles;
+}
+
 export async function generateTitles(contextId: string, email: string, num: number) {
   const context = await prisma.context.findFirst({
     where: {

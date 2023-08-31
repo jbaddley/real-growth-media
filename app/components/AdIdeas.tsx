@@ -10,11 +10,11 @@ import { FaTrash } from "react-icons/fa";
 import Button from "./Button";
 import { useLocalStorage } from "../lib/hooks/useLocalStorage";
 
-interface BasicTitleCopyProps {
+interface AdIdeasProps {
   contextId: string;
 }
 
-export default function BasicTitleCopy({ contextId }: BasicTitleCopyProps) {
+export default function AdIdeasPage({ contextId }: AdIdeasProps) {
   const [titleId, setTitleId] = useLocalStorage<string | undefined>("pp-titleId");
   const [currentPage, setCurrentPage] = useLocalStorage<number>("pp-copyPageNum", 1);
   const [generatingCopyIdeas, setGeneratingCopyIdeas] = useState<boolean>(false);
@@ -89,20 +89,20 @@ export default function BasicTitleCopy({ contextId }: BasicTitleCopyProps) {
   };
 
   return (
-    <div>
+    <div className='overflow-hidden'>
       <div className='mb-4 flex'>
         <Button color='gray' onClick={handleGetTitles}>
           {titles.length ? "More" : "Generate"} Ad Title Ideas
         </Button>
       </div>
-      <div className='flex h-screen'>
-        <div className='relative w-1/4 overflow-y-auto bg-gray-200'>
+      <div className='flex'>
+        <div className='relative w-1/4 overflow-y-auto bg-gray-100'>
           <LoadingOverlay loading={titlesAreLoading || generatingTitleIdeas} loadingText={"Generating Title Ideas"} />
           {titles?.map(({ id, headline, preHeadline, subHeadline }) => (
             <div
               key={id}
               onClick={handleGetCopy(id)}
-              className={`cursor-pointer p-4 hover:bg-gray-300 ${titleId === id ? "bg-gray-400" : ""}`}
+              className={`cursor-pointer p-4 hover:bg-gray-200 ${titleId === id ? "bg-gray-300" : ""}`}
             >
               <p className='text-xs italic'>{preHeadline}</p>
               <p className='bold text-base'>{headline}</p>
@@ -114,7 +114,7 @@ export default function BasicTitleCopy({ contextId }: BasicTitleCopyProps) {
           ))}
         </div>
 
-        <div className='relative w-3/4 overflow-y-auto bg-gray-100 p-8'>
+        <div className='bg-gray relative w-3/4 overflow-y-auto p-8'>
           <LoadingOverlay loading={copyIdeasAreLoading || generatingCopyIdeas} loadingText={"Generating Copy Ideas"} />
           <div>
             <h1 className='mb-4 text-2xl'>

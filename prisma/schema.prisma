@@ -28,13 +28,14 @@ model VerificationToken {
 }
 
 model Context {
-  id      String    @id @default(uuid()) @db.Uuid
-  email   String
-  name    String
-  data    String
-  options Json?
-  AdTitle AdTitle[]
-  AdCopy  AdCopy[]
+  id        String      @id @default(uuid()) @db.Uuid
+  email     String
+  name      String
+  data      String
+  options   Json?
+  AdTitle   AdTitle[]
+  AdCopy    AdCopy[]
+  BrandIdea BrandIdea[]
 }
 
 model AdCopy {
@@ -51,6 +52,23 @@ model AdCreative {
   id      String @id @default(uuid()) @db.Uuid
   email   String
   content String @default("")
+}
+
+model BrandPrompt {
+  id        String      @id @default(uuid()) @db.Uuid
+  email     String
+  prompt    String
+  BrandIdea BrandIdea[]
+}
+
+model BrandIdea {
+  id            String      @id @default(uuid()) @db.Uuid
+  email         String
+  content       String      @default("")
+  prompt        BrandPrompt @relation(fields: [brandPromptId], references: [id])
+  brandPromptId String      @db.Uuid
+  context       Context     @relation(fields: [contextId], references: [id])
+  contextId     String      @db.Uuid
 }
 
 model AdTitle {

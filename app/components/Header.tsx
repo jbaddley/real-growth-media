@@ -1,44 +1,39 @@
-import Link from "next/link";
+"use client";
 import SignInButton from "./SignInButton";
 import logo from "../assets/rgm-logo.png";
 import Image from "next/image";
+import { Navbar } from "flowbite-react";
+import { useAuth } from "@clerk/nextjs";
 
 const Header = () => {
+  const { isLoaded, isSignedIn } = useAuth();
   return (
-    <header className='flex h-24 flex-col justify-center bg-black'>
-      <nav className='container flex p-4'>
-        <ul className='flex grow gap-8 font-medium tracking-wider text-stone-100'>
-          <li>
-            <Link href='https://realgrowth.media'>
-              <Image src={logo} alt='RGM Logo' height={48} />
-            </Link>
-          </li>
-          <li className='py-4'>
-            <Link className='leading-6' href='/'>
-              Home
-            </Link>
-          </li>
-          <li className='py-4'>
-            <Link className='leading-6' href='/pro-peak-ai'>
-              Pro Peak AI
-            </Link>
-          </li>
-          <li className='py-4'>
-            <Link className='leading-6' href='/video-tutorial'>
-              Tutorial
-            </Link>
-          </li>
-          <li className='py-4'>
-            <Link className='leading-6' href='/modern-digital-marketing-101'>
-              Digital Marketing 101
-            </Link>
-          </li>
-        </ul>
-        <div className='py-4'>
-          <SignInButton />
-        </div>
-      </nav>
-    </header>
+    <Navbar fluid className='bg-black py-6'>
+      <Navbar.Brand href='https://book.realgrowth.media'>
+        <Image src={logo} alt='RGM Logo' height={48} />
+      </Navbar.Brand>
+      <div className='flex md:order-2'>
+        <SignInButton />
+      </div>
+      <Navbar.Collapse>
+        <Navbar.Link active href='/'>
+          <p>Home</p>
+        </Navbar.Link>
+        <Navbar.Link active href='/roas-calc'>
+          <p>ROAS Calc</p>
+        </Navbar.Link>
+        <Navbar.Link active href='https://realgrowth.media'>
+          <p>Learn More</p>
+        </Navbar.Link>
+        {isLoaded && isSignedIn ? (
+          <>
+            <Navbar.Link active href='/pro-peak-ai'>
+              <p>Pro Peak AI</p>
+            </Navbar.Link>
+          </>
+        ) : null}
+      </Navbar.Collapse>
+    </Navbar>
   );
 };
 

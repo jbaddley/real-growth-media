@@ -11,12 +11,12 @@ export const metadata = {
   description: "Pro Peak AI - A simple tool for creating contextual marketing materials",
   icons: {
     icon: {
-      url: "/assets/favicon.ico",
+      url: "/favicon.ico",
       type: "image/icon",
     },
   },
   shortcut: {
-    url: "/assets/favicon.svg",
+    url: "/favicon.svg",
     type: "image/svg",
   },
 };
@@ -25,15 +25,15 @@ export default function RootLayout({ children }) {
   return (
     <html lang='en' className={`${inter.className} h-full scroll-smooth antialiased`}>
       <head>
-        <link rel='icon' href='/assets/favicon.ico' sizes='any' />
+        <link rel='icon' href='/favicon.ico' sizes='any' />
       </head>
-      <body className='flex h-full flex-col'>
-        <Provider>
+      <Provider>
+        <body className='flex h-full flex-col'>
           <Header />
-          <main className='container my-8 grow'>{children}</main>
+          <main className='m-4 grow overflow-auto'>{children}</main>
           <Footer />
-        </Provider>
-      </body>
+        </body>
+      </Provider>
     </html>
   );
 }
