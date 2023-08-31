@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import RoasCalc, { StorageInput, defaultInput } from "../../components/RoasCalc";
 import { Button, Tabs } from "flowbite-react";
 
@@ -11,7 +11,7 @@ const defaultTabs: Record<string, StorageInput> = {
 };
 
 const getInitial = (): Record<string, StorageInput> => {
-  const stored = localStorage.getItem("pp-roas-calc");
+  const stored = globalThis.localStorage.getItem("pp-roas-calc");
   if (!stored) {
     return defaultTabs;
   }
@@ -38,9 +38,9 @@ export default function () {
     localStorage.setItem("pp-roas-calc", JSON.stringify(tabs));
   }, [tabs]);
 
-  const handleChange = (name: string, displayName: string) => {
+  const handleChange = (name: string, storageInput: StorageInput) => {
     const newTabs = { ...tabs };
-    newTabs[name].displayName = displayName;
+    newTabs[name] = storageInput;
     setTabs(newTabs);
   };
 
@@ -52,7 +52,7 @@ export default function () {
   };
 
   return (
-    <div className='px-4'>
+    <div className='p-2'>
       <Tabs.Group>
         {Object.entries(tabs).map(([key, value]) => (
           <Tabs.Item active={key === activeTab} title={value.displayName}>
@@ -60,6 +60,7 @@ export default function () {
               onChange={handleChange}
               onDelete={handleDelete}
               name={key}
+              storageInputs={tabs[key]}
               copyNames={Object.keys(tabs)
                 .filter((tab) => tab !== key)
                 .map((key) => tabs[key])}

@@ -80,7 +80,7 @@ export const defaultInput: ROASInput = {
 };
 
 const getStorage = (name: string): StorageInput => {
-  const data = JSON.parse(localStorage.getItem("pp-roas-calc") || "{}");
+  const data = JSON.parse(globalThis.localStorage.getItem("pp-roas-calc") || "{}");
   return data[name] || { input: defaultInput, displayName: name };
 };
 
@@ -111,16 +111,17 @@ function OutputDisplay({ label, ...nfProps }: { label: string; prefix?: any; val
 
 export default function ({
   name,
+  storageInputs,
   copyNames,
   onChange,
   onDelete,
 }: {
   name: string;
+  storageInputs: StorageInput;
   copyNames: Partial<StorageInput>[];
-  onChange: (name: string, displayName: string) => void;
+  onChange: (name: string, storageInput: StorageInput) => void;
   onDelete: (name: string) => void;
 }) {
-  const [storageInputs, setStorageInputs] = useState<StorageInput>(getStorage(name));
   const { input: roasInputs } = storageInputs;
   const roasOutputs = useMemo(() => {
     setStorage(name, storageInputs);
@@ -129,13 +130,12 @@ export default function ({
 
   const handleChange = (fieldName: string) => (values, e) => {
     const value = values.floatValue;
-    setStorageInputs({ ...storageInputs, input: { ...storageInputs.input, [fieldName]: +value } });
+    onChange(name, { ...storageInputs, input: { ...storageInputs.input, [fieldName]: +value } });
   };
 
   const handleChangeDisplayName = useCallback(
     ({ target: { value } }) => {
-      onChange(name, value);
-      setStorageInputs({ ...storageInputs, displayName: value });
+      onChange(name, { ...storageInputs, displayName: value });
     },
     [name]
   );
@@ -143,14 +143,15 @@ export default function ({
   const handleCopy = (name: string) => {
     return () => {
       const copy = getStorage(name);
-      setStorageInputs({ displayName: storageInputs.displayName, input: copy.input });
+      onChange(name, { displayName: storageInputs.displayName, input: copy.input });
     };
   };
 
-  const handleReset = () => setStorageInputs({ displayName: storageInputs.displayName, input: defaultInput });
+  const handleReset = () => onChange(name, { displayName: storageInputs.displayName, input: defaultInput });
   const handleDelete = () => {
     onDelete(name);
   };
+
   return (
     <div style={{ maxWidth: 1200 }} className='m-4'>
       <div className='flex space-x-4'>
