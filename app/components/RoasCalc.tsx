@@ -114,6 +114,7 @@ export default function ({
   storageInputs,
   copyNames,
   onChange,
+  onCopy,
   onDelete,
 }: {
   name: string;
@@ -121,6 +122,7 @@ export default function ({
   copyNames: Partial<StorageInput>[];
   onChange: (name: string, storageInput: StorageInput) => void;
   onDelete: (name: string) => void;
+  onCopy: (name: string) => void;
 }) {
   const { input: roasInputs } = storageInputs;
   const roasOutputs = useMemo(() => {
@@ -140,11 +142,8 @@ export default function ({
     [name]
   );
 
-  const handleCopy = (copyName: string) => {
-    return () => {
-      const copy = getStorage(copyName);
-      onChange(name, { displayName: storageInputs.displayName, input: copy.input });
-    };
+  const handleCopy = () => {
+    onCopy(name);
   };
 
   const handleReset = () => onChange(name, { displayName: storageInputs.displayName, input: defaultInput });
@@ -158,14 +157,9 @@ export default function ({
         <div className='flex-grow'>
           <TextInput value={storageInputs.displayName} onChange={handleChangeDisplayName} />
         </div>
-        <Dropdown label='Copy'>
-          {copyNames.map(({ name, displayName }) => (
-            <Dropdown.Item key={name} value={name} className='capitalize' onClick={handleCopy(name)}>
-              {displayName}
-            </Dropdown.Item>
-          ))}
-        </Dropdown>
+
         <Dropdown label={<FaBars size={20} />} arrowIcon={false}>
+          <Dropdown.Item onClick={handleCopy}>Duplicate</Dropdown.Item>
           <Dropdown.Item onClick={handleReset}>Reset</Dropdown.Item>
           <Dropdown.Item onClick={handleDelete}>Delete</Dropdown.Item>
         </Dropdown>

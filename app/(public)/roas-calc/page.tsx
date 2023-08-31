@@ -51,6 +51,17 @@ export default function () {
     setActiveTab(Object.keys(newTabs)[0]);
   };
 
+  const handleCopy = (name: string) => {
+    const newTabs = { ...tabs };
+    const copy = { ...newTabs[name] };
+    copy.displayName = `${copy.displayName} (Copy)`;
+    const count = Object.keys(tabs).length;
+    copy.name = `tab${count + 1}`;
+    newTabs[copy.name] = copy;
+    setTabs(newTabs);
+    setActiveTab(copy.name);
+  };
+
   return (
     <div className='p-2'>
       <Tabs.Group>
@@ -59,6 +70,7 @@ export default function () {
             <RoasCalc
               onChange={handleChange}
               onDelete={handleDelete}
+              onCopy={handleCopy}
               name={key}
               storageInputs={tabs[key]}
               copyNames={Object.keys(tabs)
