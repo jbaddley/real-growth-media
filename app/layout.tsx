@@ -1,4 +1,3 @@
-"use client";
 import Provider from "./components/Provider";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
@@ -6,22 +5,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { useEffect } from "react";
 import { Router } from "next/router";
+import FacebookPixel from "./components/FacebookPixel";
 
-function FacebookPixel() {
-  useEffect(() => {
-    import("react-facebook-pixel")
-      .then((x) => x.default)
-      .then((ReactPixel) => {
-        ReactPixel.init(process.env.FACEBOOKPIXEL_ID);
-        ReactPixel.pageView();
-
-        Router.events.on("routeChangeComplete", () => {
-          ReactPixel.pageView();
-        });
-      });
-  });
-  return null;
-}
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
