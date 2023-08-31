@@ -1,7 +1,10 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import RoasCalc, { StorageInput, defaultInput } from "../../components/RoasCalc";
 import { Button, Tabs } from "flowbite-react";
+import useSWR from "swr";
+import { Fetcher } from "../../lib/fetcher";
+import { Contact } from "@prisma/client";
 
 const defaultTabs: Record<string, StorageInput> = {
   defaultTab: {
@@ -19,6 +22,19 @@ const getInitial = (): Record<string, StorageInput> => {
 };
 
 export default function () {
+  const email = useMemo(() => {
+    const search = new URLSearchParams(globalThis.window.location.search);
+    return search.get("email");
+  }, [globalThis.window.location.search]);
+
+  const { data: contact, isLoading } = useSWR(["contact", email], async () => {
+    if (!email) {
+      return undefined;
+    }
+    const { data } = await Fetcher.get<Contact>(`/api/webhooks/contacts?`);
+    return data;
+  });
+
   const [tabs, setTabs] = useState<Record<string, StorageInput>>(getInitial());
   const [activeTab, setActiveTab] = useState<string>();
 
@@ -61,9 +77,19 @@ export default function () {
     setTabs(newTabs);
     setActiveTab(copy.name);
   };
+  const getVideo = () => {
+    if (isLoading) {
+      return null;
+    }
+    if (contact?.watchedRoas) {
+      return <h1>YOU WATCHED THE VIDEO</h1>;
+    }
+    return <h1>YOU DIDN'T WATCH THE VIDEO</h1>;
+  };
 
   return (
     <div className='p-2'>
+      {getVideo()}
       <Tabs.Group>
         {Object.entries(tabs).map(([key, value]) => (
           <Tabs.Item active={key === activeTab} title={value.displayName}>
