@@ -12,13 +12,13 @@ export default function RootLayout({ children }) {
     <html lang='en' className={`${inter.className} h-full scroll-smooth antialiased`}>
       <head>
         <link rel='icon' href='/favicon.ico' sizes='any' />
-        <FacebookPixel />
       </head>
       <Provider>
         <body className='flex h-full flex-col'>
           <Header />
           <main className='m-4 grow overflow-auto'>{children}</main>
           <Footer />
+          <FacebookPixel />
         </body>
       </Provider>
     </html>
