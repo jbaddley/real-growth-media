@@ -1,19 +1,20 @@
 "use client";
-import { Router } from "next/router";
-import { useEffect } from "react";
+import React, { useEffect } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 
-export default function FacebookPixel() {
+export const FacebookPixelEvents: React.FC = () => {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   useEffect(() => {
     import("react-facebook-pixel")
       .then((x) => x.default)
       .then((ReactPixel) => {
-        ReactPixel.init(process.env.FACEBOOKPIXEL_ID);
+        console.log({ FACEBOOKPIXEL_ID: process.env.FACEBOOKPIXEL_ID });
+        ReactPixel.init(process.env.FACEBOOKPIXEL_ID); //don't forget to change this
         ReactPixel.pageView();
-
-        Router.events.on("routeChangeComplete", () => {
-          ReactPixel.pageView();
-        });
       });
-  });
+  }, [pathname, searchParams]);
+
   return null;
-}
+};

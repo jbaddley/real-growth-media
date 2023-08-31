@@ -3,7 +3,8 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import FacebookPixel from "./components/FacebookPixel";
+import { FacebookPixelEvents } from "./components/FacebookPixel";
+import { Suspense } from "react";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -18,7 +19,9 @@ export default function RootLayout({ children }) {
           <Header />
           <main className='m-4 grow overflow-auto'>{children}</main>
           <Footer />
-          <FacebookPixel />
+          <Suspense fallback={null}>
+            <FacebookPixelEvents />
+          </Suspense>
         </body>
       </Provider>
     </html>
