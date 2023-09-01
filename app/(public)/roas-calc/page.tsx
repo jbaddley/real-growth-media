@@ -31,7 +31,7 @@ export default function () {
     if (!email) {
       return undefined;
     }
-    const { data } = await Fetcher.get<Contact>(`/api/webhooks/contacts?`);
+    const { data } = await Fetcher.get<Contact>(`/api/webhooks/contacts?email=${email}`);
     return data;
   });
 
