@@ -9,6 +9,7 @@
     "start": "next start -p 3000",
     "lint": "next lint",
     "deploydb": "prisma generate && prisma db push",
+    "postinstall": "prisma generate",
     "write": "ts-node ./app/lib/saveArticle.ts"
   },
   "dependencies": {
