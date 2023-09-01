@@ -27,12 +27,6 @@ export default function Home() {
         >
           ROAS Calc
         </Link>
-        <Link
-          href='/modern-digital-marketing-101'
-          className='flex h-16 w-64 items-center justify-center rounded-lg bg-purple-500 text-white transition hover:bg-purple-600'
-        >
-          Modern Digital Advertising 101
-        </Link>
       </div>
     </div>
   );
