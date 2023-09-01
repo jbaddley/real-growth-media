@@ -11,8 +11,12 @@ datasource db {
 }
 
 model Contact {
-  id             String  @id @default(uuid()) @db.Uuid
-  email          String? @unique
+  id             String   @id @default(uuid()) @db.Uuid
+  firstName      String?
+  lastName       String?
+  phone          String?
+  allowContact   Boolean?
+  email          String?  @unique
   watchedTraning String?
   watchedPrecall String?
   watchedRoas    String?

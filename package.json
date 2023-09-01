@@ -8,7 +8,7 @@
     "deploy": "git add . && git commit -m 'deploying' && git push",
     "start": "next start -p 3000",
     "lint": "next lint",
-    "postinstall": "prisma generate",
+    "deploydb": "prisma generate && prisma db push",
     "write": "ts-node ./app/lib/saveArticle.ts"
   },
   "dependencies": {
