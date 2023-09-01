@@ -18,6 +18,7 @@ export async function GET(req: NextRequest, res: NextResponse) {
     status: "success",
   });
 }
+
 export async function POST(req: NextRequest, res: NextResponse) {
   const body = await req.json();
   let contact = await prisma.contact.findFirst({
