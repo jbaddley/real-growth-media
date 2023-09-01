@@ -7,7 +7,7 @@ import { Fetcher } from "../../lib/fetcher";
 import { Contact } from "@prisma/client";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
-import e from "cors";
+
 const videoSrc = "https://storage.googleapis.com/msgsndr/nrw8M8zQccEYIjAMiR22/media/64f0ef8a1181e8f643212216.mp4";
 const defaultTabs: Record<string, StorageInput> = {
   defaultTab: {
