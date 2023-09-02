@@ -136,7 +136,7 @@ export default function () {
   return (
     <div className='p-2'>
       <div className='flex flex-row-reverse'>
-        <Button onClick={() => setOpen(true)}>Show Demo</Button>
+        <Button onClick={() => setOpen(true)}>Free Training</Button>
       </div>
       <Tabs.Group tabIndex={activeTabIndex}>
         {Object.entries(tabs).map(([key, value]) => (
