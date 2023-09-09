@@ -134,12 +134,13 @@ export default function () {
     <div className='p-2'>
       <div className='flex flex-row-reverse'>
         <Button onClick={handleAddTab}>+</Button>
-        <Button className='me-2' onClick={() => setOpen(true)}>
-          Proposal Video
-        </Button>
         <Button className='me-2' onClick={() => saveProposals(proposal, tabs)}>
           Save
         </Button>
+        <Button className='me-2' color='purple' onClick={() => setOpen(true)}>
+          Proposal Video
+        </Button>
+
         <CreateProposal
           className='me-2 hidden'
           proposalId={proposalId}
