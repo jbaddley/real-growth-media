@@ -141,7 +141,7 @@ export default function () {
           Save
         </Button>
         <CreateProposal
-          className='me-2'
+          className='me-2 hidden'
           proposalId={proposalId}
           onCreate={(proposal) => {
             setProposal(proposal);
