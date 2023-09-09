@@ -7,11 +7,13 @@ import { useEffect, useRef, useState } from "react";
 
 export default function CreateProposal({
   proposalId,
+  proposal,
   onFetch,
   onCreate,
   ...rest
 }: {
   proposalId?: string;
+  proposal?: Proposals;
   onFetch?: (proposal: Proposals) => void;
   onCreate?: (proposal: Proposals) => void;
   className?: string;
@@ -26,20 +28,6 @@ export default function CreateProposal({
     formState: { errors },
   } = useForm();
 
-  const {
-    data: proposal,
-    isLoading,
-    mutate,
-  } = useSWR(["proposal", proposalId], async () => {
-    if (!proposalId) {
-      return undefined;
-    }
-    const { data } = await Fetcher.get<Proposals>(`/api/proposals/${proposalId}`);
-    console.log({ data });
-    onFetch?.(data);
-    return data;
-  });
-
   useEffect(() => {
     if (proposal) {
       setValue("email", proposal.email);
@@ -49,10 +37,8 @@ export default function CreateProposal({
   }, [proposal]);
 
   const handleSave = async (values) => {
-    const { data } = await Fetcher.post<Proposals, Proposals>(`/api/proposals`, values);
-    console.log({ save: data });
+    const { data } = await Fetcher.post<Proposals, Proposals>(`/api/proposals`, { ...proposal, ...values });
     onCreate?.(data);
-    mutate();
     setShow(false);
   };
 

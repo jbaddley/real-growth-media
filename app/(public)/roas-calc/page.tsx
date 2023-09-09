@@ -44,6 +44,16 @@ export default function () {
     return proposalId;
   }, [globalThis.window.location.search]);
 
+  const getProposal = async (proposalId: string) => {
+    const { data } = await Fetcher.get<Proposals>(`/api/proposals/${proposalId}`);
+    return data;
+  };
+  useEffect(() => {
+    if (proposalId) {
+      getProposal(proposalId).then((p) => setProposal(p));
+    }
+  }, [proposalId]);
+
   const [tabs, setTabs] = useState<Record<string, StorageInput>>();
   const [activeTab, setActiveTab] = useState<string>();
 
