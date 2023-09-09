@@ -93,3 +93,11 @@ model AdTitle {
   AdCopy      AdCopy[]
   contextId   String   @db.Uuid
 }
+
+model Proposals {
+  id        String  @id @default(uuid()) @db.Uuid
+  email     String
+  name      String?
+  videoUrl  String?
+  proposals Json?
+}

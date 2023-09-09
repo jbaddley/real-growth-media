@@ -11,10 +11,16 @@ interface ROASInput {
   netCustomerValuePerMonth?: number;
   averageCustomerLength?: number;
   expertCostPerMonth?: number;
+  commissionPercentage?: number;
+  monthlyGoal?: number;
+  adSpend?: number;
+  setupFee?: number;
 }
 
 interface ROASOutput {
   totalMarketingInvestment?: number;
+  monthlyMarketingCommissions?: number;
+  totalMarketingCommissions?: number;
   totalReturn?: number;
   monthlyReturn?: number;
   monthlyReturnNet?: number;
@@ -26,6 +32,9 @@ interface ROASOutput {
   profitPeriod?: number;
   customerValue?: number;
   costPerCustomerAcquisition?: number;
+  adSpendPerMonth?: number;
+  leadsPerMonth?: number;
+  monthsToReachGoal?: number;
 }
 
 function roasCalc({
@@ -34,32 +43,43 @@ function roasCalc({
   leadsPerMonth = 0,
   netCustomerValuePerMonth = 0,
   averageCustomerLength = 0,
+  commissionPercentage = 0,
   expertCostPerMonth = 0,
+  monthlyGoal = 0,
+  setupFee = 0,
 }: ROASInput): ROASOutput {
-  const totalMarketingInvestment = expertCostPerMonth + costPerLead * leadsPerMonth;
   const customerValue = netCustomerValuePerMonth * averageCustomerLength;
   const numCustomersPerMonth = Math.floor((conversionRate / 100) * leadsPerMonth);
   const totalReturn = customerValue * numCustomersPerMonth;
+  const totalMarketingCommissions = totalReturn * (commissionPercentage / 100);
+  const adSpendPerMonth = costPerLead * leadsPerMonth;
+  const totalMarketingInvestment = expertCostPerMonth + costPerLead * leadsPerMonth + setupFee;
   const monthlyReturn = netCustomerValuePerMonth * numCustomersPerMonth;
-  const monthlyReturnNet = monthlyReturn - totalMarketingInvestment;
+  const monthlyMarketingCommissions = monthlyReturn * (commissionPercentage / 100);
+  const monthlyReturnNet = monthlyReturn - (totalMarketingInvestment + monthlyMarketingCommissions);
   const roas = totalReturn - totalMarketingInvestment;
   const roasPercent = Math.round((roas / totalMarketingInvestment) * 100);
   const costPerCustomerAcquisition = totalMarketingInvestment / numCustomersPerMonth;
   const roasX = customerValue / costPerCustomerAcquisition;
   const payBackPeriod = Math.ceil(costPerCustomerAcquisition / netCustomerValuePerMonth);
   const profitPeriod = averageCustomerLength - payBackPeriod;
+  const monthsToReachGoal = monthlyGoal / (monthlyReturn - monthlyMarketingCommissions);
   return {
     totalMarketingInvestment,
+    monthsToReachGoal,
+    totalMarketingCommissions,
     customerValue,
     numCustomersPerMonth,
     totalReturn,
     roas,
     roasPercent,
     costPerCustomerAcquisition,
+    adSpendPerMonth,
     roasX,
     payBackPeriod,
     profitPeriod,
     monthlyReturn,
+    monthlyMarketingCommissions,
     monthlyReturnNet,
   };
 }
@@ -77,6 +97,7 @@ export const defaultInput: ROASInput = {
   netCustomerValuePerMonth: 5000,
   averageCustomerLength: 1,
   expertCostPerMonth: 0,
+  commissionPercentage: 0,
 };
 
 const getStorage = (name: string): StorageInput => {
@@ -90,9 +111,22 @@ const setStorage = (name: string, input: StorageInput) => {
   return localStorage.setItem("pp-roas-calc", JSON.stringify(data, null, 2));
 };
 
-function OutputDisplay({ label, ...nfProps }: { label: string; prefix?: any; value?: any; suffix?: any }) {
+function OutputDisplay({
+  label,
+  hide,
+  ...nfProps
+}: {
+  hide?: boolean;
+  label: string;
+  prefix?: any;
+  value?: any;
+  suffix?: any;
+}) {
+  if (hide) {
+    return null;
+  }
   return (
-    <div className='columns-3'>
+    <div className='columns-2'>
       <p className='text-right'>{label}: </p>
       <NumericFormat
         thousandSeparator=','
@@ -133,6 +167,33 @@ export default function ({
   const handleChange = (fieldName: string) => (values, e) => {
     const value = values.floatValue;
     onChange(name, { ...storageInputs, input: { ...storageInputs.input, [fieldName]: +value } });
+  };
+
+  const handleUpdateAdSpend = (values, e) => {
+    const value = +values.floatValue;
+    const { costPerLead } = storageInputs.input;
+    onChange(name, {
+      ...storageInputs,
+      input: { ...storageInputs.input, adSpend: +value, leadsPerMonth: value / costPerLead },
+    });
+  };
+
+  const handleUpdateNumberOfLeads = (values, e) => {
+    const value = +values.floatValue;
+    const { costPerLead } = storageInputs.input;
+    onChange(name, {
+      ...storageInputs,
+      input: { ...storageInputs.input, leadsPerMonth: +value, adSpend: value * costPerLead },
+    });
+  };
+
+  const handleUpdateCostPerLead = (values, e) => {
+    const value = +values.floatValue;
+    const { leadsPerMonth } = storageInputs.input;
+    onChange(name, {
+      ...storageInputs,
+      input: { ...storageInputs.input, costPerLead: +value, adSpend: value * leadsPerMonth },
+    });
   };
 
   const handleChangeDisplayName = useCallback(
@@ -211,7 +272,7 @@ export default function ({
               customInput={TextInput}
               value={roasInputs.costPerLead}
               name='costPerLead'
-              onValueChange={handleChange("costPerLead")}
+              onValueChange={handleUpdateCostPerLead}
             />
           </div>
           <div>
@@ -230,41 +291,102 @@ export default function ({
               customInput={TextInput}
               value={roasInputs.leadsPerMonth}
               name='leadsPerMonth'
-              onValueChange={handleChange("leadsPerMonth")}
+              onValueChange={handleUpdateNumberOfLeads}
             />
           </div>
         </div>
-        <div className='my-4'>
-          <label>Ad Implementation Cost Per Month</label>
-          <NumericFormat
-            prefix={"$"}
-            customInput={TextInput}
-            thousandSeparator=','
-            value={roasInputs.expertCostPerMonth}
-            name='expertCostPerMonth'
-            onValueChange={handleChange("expertCostPerMonth")}
-          />
+        <div className='my-4 columns-4'>
+          <div>
+            <label>Ad Implementation Cost Per Month</label>
+            <NumericFormat
+              prefix={"$"}
+              customInput={TextInput}
+              thousandSeparator=','
+              value={roasInputs.expertCostPerMonth}
+              name='expertCostPerMonth'
+              onValueChange={handleChange("expertCostPerMonth")}
+            />
+          </div>
+          <div>
+            <label>Setup Fee</label>
+            <NumericFormat
+              prefix={"$"}
+              customInput={TextInput}
+              thousandSeparator=','
+              value={roasInputs.setupFee}
+              name='setupFee'
+              onValueChange={handleChange("setupFee")}
+            />
+          </div>
+          <div>
+            <label>Commission Percentage</label>
+            <NumericFormat
+              suffix={"%"}
+              customInput={TextInput}
+              value={roasInputs.commissionPercentage}
+              name='commissionPercentage'
+              onValueChange={handleChange("commissionPercentage")}
+            />
+          </div>
+          <div>
+            <label>Ad Spend</label>
+            <NumericFormat
+              prefix={"$"}
+              customInput={TextInput}
+              value={roasInputs.adSpend || roasOutputs.adSpendPerMonth}
+              name='adSpend'
+              onValueChange={handleUpdateAdSpend}
+            />
+          </div>
         </div>
       </div>
       <div>
-        <OutputDisplay label='Net Gain in New Lifetime Revenue' prefix='$' value={roasOutputs.totalReturn} />
-        <OutputDisplay label='Total Cost of Marketing' prefix='$' value={roasOutputs.totalMarketingInvestment} />
-        <OutputDisplay label='Total New Customers Per Month' value={roasOutputs.numCustomersPerMonth} />
-        <OutputDisplay label='Gross Gain in New Monthly Revenue' prefix='$' value={roasOutputs.monthlyReturn} />
-        <OutputDisplay label='Net Gain in New Monthly Revenue' prefix='$' value={roasOutputs.monthlyReturnNet} />
-        <OutputDisplay label='ROAS' prefix='$' value={roasOutputs.roas} />
-        <OutputDisplay label='ROAS X' suffix='X' value={roasOutputs.roasX} />
-        <OutputDisplay
-          label='Payback Period'
-          suffix={` month${roasOutputs.payBackPeriod === 1 ? "" : "s"}`}
-          value={roasOutputs.payBackPeriod}
-        />
-        <OutputDisplay
-          label='Profit Period'
-          suffix={` month${roasOutputs.profitPeriod === 1 ? "" : "s"}`}
-          value={roasOutputs.profitPeriod}
-        />
-        <OutputDisplay label='Customer Acquistion Cost' prefix='$' value={roasOutputs.costPerCustomerAcquisition} />
+        <div>
+          <div className='columns-2'>
+            <p className='text-right'>Monthly Revenue Goal:</p>
+            <NumericFormat
+              customInput={TextInput}
+              prefix={"$"}
+              value={roasInputs.monthlyGoal}
+              thousandSeparator=','
+              name='monthlyGoal'
+              onValueChange={handleChange("monthlyGoal")}
+            />
+          </div>
+          <OutputDisplay label='Number of Months to Reach Goal' prefix='' value={roasOutputs.monthsToReachGoal} />
+        </div>
+        <div>
+          <OutputDisplay label='Net Gain in New Lifetime Revenue' prefix='$' value={roasOutputs.totalReturn} />
+          <OutputDisplay
+            label='Monthly Cost of Commissions'
+            prefix='$'
+            value={roasOutputs.monthlyMarketingCommissions}
+          />
+          <OutputDisplay label='Monthly Cost of Ads' prefix='$' value={roasOutputs.adSpendPerMonth} />
+          <OutputDisplay label='Total Cost of Commissions' prefix='$' value={roasOutputs.totalMarketingCommissions} />
+          <OutputDisplay label='Total Cost of Marketing' prefix='$' value={roasOutputs.totalMarketingInvestment} />
+          <OutputDisplay label='Total New Customers Per Month' value={roasOutputs.numCustomersPerMonth} />
+          <OutputDisplay label='Gross Gain in New Monthly Revenue' prefix='$' value={roasOutputs.monthlyReturn} />
+          <OutputDisplay
+            hide={true}
+            label='Net Gain in New Monthly Revenue'
+            prefix='$'
+            value={roasOutputs.monthlyReturnNet}
+          />
+          <OutputDisplay label='ROAS' prefix='$' value={roasOutputs.roas} />
+          <OutputDisplay label='ROAS X' suffix='X' value={roasOutputs.roasX} />
+          <OutputDisplay
+            label='Payback Period'
+            suffix={` month${roasOutputs.payBackPeriod === 1 ? "" : "s"}`}
+            value={roasOutputs.payBackPeriod}
+          />
+          <OutputDisplay
+            label='Profit Period'
+            suffix={` month${roasOutputs.profitPeriod === 1 ? "" : "s"}`}
+            value={roasOutputs.profitPeriod}
+          />
+          <OutputDisplay label='Customer Acquistion Cost' prefix='$' value={roasOutputs.costPerCustomerAcquisition} />
+        </div>
       </div>
     </div>
   );

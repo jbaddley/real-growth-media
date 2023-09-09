@@ -4,20 +4,24 @@ import RoasCalc, { StorageInput, defaultInput } from "../../components/RoasCalc"
 import { Button, Modal, Tabs, TextInput } from "flowbite-react";
 import useSWR from "swr";
 import { Fetcher } from "../../lib/fetcher";
-import { Contact } from "@prisma/client";
+import { Contact, Proposals } from "@prisma/client";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
+import CreateProposal from "../../components/CreateProposal";
+import { usePathname, useRouter } from "next/navigation";
+import _ from "lodash";
 
 const videoSrc = "https://storage.googleapis.com/msgsndr/nrw8M8zQccEYIjAMiR22/media/64f0ef8a1181e8f643212216.mp4";
 const defaultTabs: Record<string, StorageInput> = {
   defaultTab: {
     displayName: "ROAS Calc Default",
+    name: "tab1",
     input: {},
   },
 };
 
-const getInitial = (): Record<string, StorageInput> => {
-  const stored = globalThis.localStorage.getItem("pp-roas-calc");
+const getInitial = (id?: string): Record<string, StorageInput> => {
+  const stored = globalThis.localStorage.getItem(`pp-roas-calc-${id}`);
   if (!stored) {
     return defaultTabs;
   }
@@ -25,52 +29,22 @@ const getInitial = (): Record<string, StorageInput> => {
 };
 
 export default function () {
-  const submitButton = useRef<HTMLButtonElement>(null);
+  const [proposal, setProposal] = useState<Proposals>(null);
   const [open, setOpen] = useState<boolean>(false);
-  const [openContact, setOpenContact] = useState<boolean>(false);
-  const {
-    register,
-    setValue,
-    handleSubmit,
-    formState: { errors },
-  } = useForm();
+  const [openProposal, setOpenProposal] = useState<boolean>(false);
 
   const email = useMemo(() => {
     const search = new URLSearchParams(globalThis.window.location.search);
     return search.get("email") || globalThis.localStorage.getItem("pp-contact-email");
   }, [globalThis.window.location.search]);
 
-  const {
-    data: contact,
-    isLoading,
-    mutate,
-  } = useSWR(["contact", email], async () => {
-    if (!email) {
-      return undefined;
-    }
-    const { data } = await Fetcher.get<Contact>(`/api/webhooks/contacts?email=${email}`);
-    globalThis.localStorage.setItem("pp-contact-email", data.email);
-    return data;
-  });
+  const proposalId = useMemo(() => {
+    const search = new URLSearchParams(globalThis.window.location.search);
+    const proposalId = search.get("proposal");
+    return proposalId;
+  }, [globalThis.window.location.search]);
 
-  useEffect(() => {
-    if (!isLoading && contact) {
-      setValue("email", contact.email);
-      setValue("firstName", contact.firstName);
-      setValue("lastName", contact.lastName);
-      setValue("phone", contact.phone);
-      setValue("allowContact", contact.allowContact);
-      globalThis.localStorage.setItem("pp-contact-email", contact.email);
-    }
-  }, [contact, isLoading]);
-
-  useEffect(() => {
-    if (!email) {
-      setOpenContact(true);
-    }
-  }, [email]);
-
-  const [tabs, setTabs] = useState<Record<string, StorageInput>>(getInitial());
+  const [tabs, setTabs] = useState<Record<string, StorageInput>>();
   const [activeTab, setActiveTab] = useState<string>();
 
   const handleAddTab = useCallback(
@@ -78,21 +52,35 @@ export default function () {
       e.stopPropagation();
       e.preventDefault();
       const count = Object.keys(tabs).length;
-      const name = `tab${count}`;
+      const name = `tab${count + 1}`;
       const newTabs = { ...tabs };
       newTabs[name] = {
         input: defaultInput,
+        name,
         displayName: `ROAS Calc ${count + 1}`,
       };
       setTabs(newTabs);
       setActiveTab(name);
+      saveProposals(proposal, newTabs);
     },
-    [tabs]
+    [proposal, tabs]
   );
 
   useEffect(() => {
-    localStorage.setItem("pp-roas-calc", JSON.stringify(tabs));
-  }, [tabs]);
+    if (proposal?.proposals) {
+      setTabs(JSON.parse(String(proposal.proposals)));
+    } else {
+      setTabs(getInitial(proposalId));
+    }
+  }, [proposal]);
+
+  const saveProposals = (proposal: Proposals, tabs: Record<string, StorageInput>) => {
+    return Fetcher.post<Proposals, Proposals>("/api/proposals", { ...proposal, proposals: JSON.stringify(tabs) });
+  };
+
+  useEffect(() => {
+    localStorage.setItem(`pp-roas-calc-${proposalId}`, JSON.stringify(tabs));
+  }, [tabs, proposal, proposalId]);
 
   const handleChange = (name: string, storageInput: StorageInput) => {
     const newTabs = { ...tabs };
@@ -104,6 +92,7 @@ export default function () {
     const newTabs = { ...tabs };
     delete newTabs[name];
     setTabs(newTabs);
+    saveProposals(proposal, newTabs);
     setActiveTab(Object.keys(newTabs)[0]);
   };
 
@@ -116,10 +105,11 @@ export default function () {
     newTabs[copy.name] = copy;
     setTabs(newTabs);
     setActiveTab(copy.name);
+    saveProposals(proposal, newTabs);
   };
 
   const activeTabIndex = useMemo(() => {
-    return Object.keys(tabs).findIndex((tab) => tab === activeTab);
+    return Object.keys(tabs || {}).findIndex((tab) => tab === activeTab);
   }, [tabs, activeTab]);
 
   const handleCaptureEnded = async () => {
@@ -127,19 +117,33 @@ export default function () {
     setOpen(false);
   };
 
-  const handleSaveContact = async (formValues: Contact) => {
-    await Fetcher.post<Contact, Contact>("/api/webhooks/contacts", formValues);
-    mutate();
-    setOpenContact(false);
-  };
+  const router = useRouter();
+  const pathname = usePathname();
 
   return (
     <div className='p-2'>
       <div className='flex flex-row-reverse'>
-        <Button onClick={() => setOpen(true)}>Free Training</Button>
+        <Button onClick={handleAddTab}>+</Button>
+        <Button className='me-2' onClick={() => setOpen(true)}>
+          Proposal Video
+        </Button>
+        <Button className='me-2' onClick={() => saveProposals(proposal, tabs)}>
+          Save
+        </Button>
+        <CreateProposal
+          className='me-2'
+          proposalId={proposalId}
+          onCreate={(proposal) => {
+            setProposal(proposal);
+            router.replace(`${pathname}?proposal=${proposal.id}`, { scroll: false });
+          }}
+          onFetch={(proposal) => {
+            setProposal(proposal);
+          }}
+        />
       </div>
       <Tabs.Group tabIndex={activeTabIndex}>
-        {Object.entries(tabs).map(([key, value]) => (
+        {Object.entries(tabs || {}).map(([key, value]) => (
           <Tabs.Item key={key} active={key === activeTab} title={value.displayName}>
             <RoasCalc
               onChange={handleChange}
@@ -153,11 +157,13 @@ export default function () {
             />
           </Tabs.Item>
         ))}
-        <Tabs.Item title={<Button onClick={handleAddTab}>+</Button>} />
       </Tabs.Group>
+      <Modal show={openProposal} onClose={() => setOpenProposal(false)}></Modal>
       <Modal show={open} onClose={() => setOpen(false)} size={"5xl"}>
         <Modal.Header>Quick Demo!</Modal.Header>
-        <Modal.Body>{open && <video src={videoSrc} controls autoFocus onEnded={handleCaptureEnded} />}</Modal.Body>
+        <Modal.Body>
+          {open && <video src={proposal?.videoUrl} controls autoFocus onEnded={handleCaptureEnded} />}
+        </Modal.Body>
         <Modal.Footer className='flex'>
           <div className='flex-grow'>
             <Link className='mx-4' target='blank' href='https://book.realgrowth.media/booking'>
@@ -166,57 +172,6 @@ export default function () {
           </div>
           <div>
             <Button onClick={() => setOpen(false)}>Close</Button>
-          </div>
-        </Modal.Footer>
-      </Modal>
-      <Modal show={openContact} onClose={() => setOpenContact(false)}>
-        <Modal.Header>In Order to Use Our ROAS Calculator, Please Confirm Your Contact Information</Modal.Header>
-        <Modal.Body>
-          <form onSubmit={handleSubmit(handleSaveContact)} className='space-y-4'>
-            <p>We will never sell your information.</p>
-            <p>We use the information to improve our free tools and create new ones.</p>
-            <div>
-              <label>First Name</label>
-              <TextInput {...register("firstName")} />
-            </div>
-            <div>
-              <label>Last Name</label>
-              <TextInput {...register("lastName")} />
-            </div>
-            <div>
-              <label>Email Address</label>
-              <TextInput {...register("email")} />
-            </div>
-            <div>
-              <label>Phone Number</label>
-              <TextInput {...register("phone")} />
-            </div>
-            <p>May we reach out to you about additional tools and services?</p>
-            <label>
-              <input type='checkbox' {...register("allowContact")} /> Yes, you can contact me.
-            </label>
-            <button ref={submitButton} className='hidden' type='submit'>
-              OK
-            </button>
-          </form>
-        </Modal.Body>
-        <Modal.Footer className='flex'>
-          <div>
-            <Link className='mx-4' target='blank' href='https://book.realgrowth.media/booking'>
-              Book a Call
-            </Link>
-          </div>
-          <div className='flex flex-grow flex-row-reverse'>
-            <Button
-              onClick={() => {
-                submitButton.current.click();
-              }}
-            >
-              Submit
-            </Button>
-            <Button className='mx-4' onClick={() => setOpenContact(false)}>
-              Close
-            </Button>
           </div>
         </Modal.Footer>
       </Modal>
