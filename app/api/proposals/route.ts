@@ -3,19 +3,10 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 export async function GET(req: NextRequest, res: NextResponse) {
-  const { searchParams } = new URL(req.url);
-  const id = searchParams.get("id");
-  console.log({ id });
-  let proposal = await prisma.proposals.findFirst({
-    where: {
-      id,
-    },
-  });
-
-  console.log({ proposal });
+  let proposals = await prisma.proposals.findMany();
 
   return NextResponse.json({
-    data: proposal,
+    data: proposals,
     status: "success",
   });
 }

@@ -1,11 +1,12 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import RoasCalc, { StorageInput, defaultInput } from "../../components/RoasCalc";
-import { Button, Modal, Tabs } from "flowbite-react";
+import { Button, Dropdown, Modal, Tabs } from "flowbite-react";
 import { useHotkeys } from "@mantine/hooks";
 import { Fetcher } from "../../lib/fetcher";
 import { Proposals } from "@prisma/client";
 import Link from "next/link";
+import useSWR from "swr";
 import CreateProposal from "../../components/CreateProposal";
 import { usePathname, useRouter } from "next/navigation";
 import _ from "lodash";
@@ -32,31 +33,39 @@ const getInitial = (id?: string): Record<string, StorageInput> => {
 export default function () {
   const [proposal, setProposal] = useState<Proposals>(null);
   const [open, setOpen] = useState<boolean>(false);
+  const [saving, setSaving] = useState<boolean>(false);
   const [openProposal, setOpenProposal] = useState<boolean>(false);
   const [showUpdate, setShowUpdate] = useState<boolean>(false);
 
-  useHotkeys([["ctrl+U", () => setShowUpdate(!showUpdate)]]);
+  useHotkeys([
+    ["ctrl+U", () => setShowUpdate(!showUpdate)],
+    ["ctrl+S", () => saveProposals(proposal, tabs)],
+  ]);
+
+  const { data: proposals = [] } = useSWR(["proposals"], async () => {
+    const { data } = await Fetcher.get<Proposals[]>("/api/proposals");
+    return data;
+  });
 
   const email = useMemo(() => {
     const search = new URLSearchParams(globalThis.window.location.search);
     return search.get("email") || globalThis.localStorage.getItem("pp-contact-email");
   }, [globalThis.window.location.search]);
 
-  const proposalId = useMemo(() => {
-    const search = new URLSearchParams(globalThis.window.location.search);
-    const proposalId = search.get("proposal");
-    return proposalId;
-  }, [globalThis.window.location.search]);
-
   const getProposal = async (proposalId: string) => {
     const { data } = await Fetcher.get<Proposals>(`/api/proposals/${proposalId}`);
     return data;
   };
-  useEffect(() => {
+  const proposalId = useMemo(() => {
+    const search = new URLSearchParams(globalThis.window.location.search);
+    const proposalId = search.get("proposal");
     if (proposalId) {
       getProposal(proposalId).then((p) => setProposal(p));
+    } else {
+      getProposal(null);
     }
-  }, [proposalId]);
+    return proposalId;
+  }, [globalThis.window.location.search]);
 
   const [tabs, setTabs] = useState<Record<string, StorageInput>>();
   const [activeTab, setActiveTab] = useState<string>();
@@ -81,15 +90,18 @@ export default function () {
   );
 
   useEffect(() => {
+    console.log({ proposal: proposal?.proposals });
     if (proposal?.proposals) {
       setTabs(JSON.parse(String(proposal.proposals)));
     } else {
       setTabs(getInitial(proposalId));
     }
-  }, [proposal]);
+  }, [proposal, proposalId]);
 
-  const saveProposals = (proposal: Proposals, tabs: Record<string, StorageInput>) => {
-    return Fetcher.post<Proposals, Proposals>("/api/proposals", { ...proposal, proposals: JSON.stringify(tabs) });
+  const saveProposals = async (proposal: Proposals, tabs: Record<string, StorageInput>) => {
+    setSaving(true);
+    await Fetcher.post<Proposals, Proposals>("/api/proposals", { ...proposal, proposals: JSON.stringify(tabs) });
+    setSaving(false);
   };
 
   useEffect(() => {
@@ -143,24 +155,51 @@ export default function () {
     <div className='p-2'>
       <div className='flex flex-row-reverse'>
         <Button onClick={handleAddTab}>+</Button>
-        <Button className='me-2' onClick={() => saveProposals(proposal, tabs)}>
+        <Button className='me-2' color={saving ? "purple" : undefined} onClick={() => saveProposals(proposal, tabs)}>
           Save
         </Button>
         <Button className='me-2' color='purple' onClick={onWatch}>
           Proposal Video
         </Button>
         {showUpdate && (
-          <CreateProposal
-            className='me-2'
-            proposalId={proposalId}
-            onCreate={(proposal) => {
-              setProposal(proposal);
-              router.replace(`${pathname}?proposal=${proposal.id}`, { scroll: false });
-            }}
-            onFetch={(proposal) => {
-              setProposal(proposal);
-            }}
-          />
+          <>
+            <CreateProposal
+              className='me-2'
+              proposal={proposal}
+              onCreate={(proposal) => {
+                setProposal(proposal);
+                router.replace(`${pathname}?proposal=${proposal.id}`, { scroll: false });
+              }}
+              onFetch={(proposal) => {
+                setProposal(proposal);
+              }}
+            />
+            <CreateProposal
+              className='me-2'
+              onCreate={(proposal) => {
+                setProposal(proposal);
+                router.replace(`${pathname}?proposal=${proposal.id}`, { scroll: false });
+              }}
+              onFetch={(proposal) => {
+                setProposal(proposal);
+              }}
+            />
+            <div className='me-2'>
+              <Dropdown label={proposal?.name || "Select a Proposal"}>
+                {proposals.map((p) => (
+                  <Dropdown.Item
+                    onClick={() => {
+                      setProposal(proposal);
+                      router.replace(`${pathname}?proposal=${p.id}`, { scroll: false });
+                    }}
+                    key={p.id}
+                  >
+                    {p.name}
+                  </Dropdown.Item>
+                ))}
+              </Dropdown>
+            </div>
+          </>
         )}
       </div>
       <Tabs.Group tabIndex={activeTabIndex}>

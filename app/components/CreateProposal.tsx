@@ -45,10 +45,10 @@ export default function CreateProposal({
   return (
     <>
       <Button {...rest} onClick={() => setShow(true)}>
-        {proposalId ? "Update" : "Create"} Proposal
+        {proposal?.id ? "Update" : "Create"} Proposal
       </Button>
       <Modal show={show} onClose={() => setShow(false)}>
-        <Modal.Header>{proposalId ? "Update" : "Create"} Proposal</Modal.Header>
+        <Modal.Header>{proposal?.id ? "Update" : "Create"} Proposal</Modal.Header>
         <Modal.Body>
           <form onSubmit={handleSubmit(handleSave)}>
             <div>
