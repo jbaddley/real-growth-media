@@ -1,15 +1,16 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import RoasCalc, { StorageInput, defaultInput } from "../../components/RoasCalc";
-import { Button, Modal, Tabs, TextInput } from "flowbite-react";
-import useSWR from "swr";
+import { Button, Modal, Tabs } from "flowbite-react";
+import { useHotkeys } from "@mantine/hooks";
 import { Fetcher } from "../../lib/fetcher";
-import { Contact, Proposals } from "@prisma/client";
+import { Proposals } from "@prisma/client";
 import Link from "next/link";
-import { useForm } from "react-hook-form";
 import CreateProposal from "../../components/CreateProposal";
 import { usePathname, useRouter } from "next/navigation";
 import _ from "lodash";
+const service =
+  "https://services.leadconnectorhq.com/hooks/nrw8M8zQccEYIjAMiR22/webhook-trigger/cb4fd5d6-3892-4090-bba9-b5dc392b0531";
 
 const videoSrc = "https://storage.googleapis.com/msgsndr/nrw8M8zQccEYIjAMiR22/media/64f0ef8a1181e8f643212216.mp4";
 const defaultTabs: Record<string, StorageInput> = {
@@ -32,6 +33,9 @@ export default function () {
   const [proposal, setProposal] = useState<Proposals>(null);
   const [open, setOpen] = useState<boolean>(false);
   const [openProposal, setOpenProposal] = useState<boolean>(false);
+  const [showUpdate, setShowUpdate] = useState<boolean>(false);
+
+  useHotkeys([["ctrl+U", () => setShowUpdate(!showUpdate)]]);
 
   const email = useMemo(() => {
     const search = new URLSearchParams(globalThis.window.location.search);
@@ -130,6 +134,11 @@ export default function () {
   const router = useRouter();
   const pathname = usePathname();
 
+  const onWatch = useCallback(() => {
+    setOpen(true);
+    Fetcher.get(service, undefined, { name: proposal.name, email: proposal.email, watched_video: true });
+  }, [proposal]);
+
   return (
     <div className='p-2'>
       <div className='flex flex-row-reverse'>
@@ -137,21 +146,22 @@ export default function () {
         <Button className='me-2' onClick={() => saveProposals(proposal, tabs)}>
           Save
         </Button>
-        <Button className='me-2' color='purple' onClick={() => setOpen(true)}>
+        <Button className='me-2' color='purple' onClick={onWatch}>
           Proposal Video
         </Button>
-
-        <CreateProposal
-          className='me-2 hidden'
-          proposalId={proposalId}
-          onCreate={(proposal) => {
-            setProposal(proposal);
-            router.replace(`${pathname}?proposal=${proposal.id}`, { scroll: false });
-          }}
-          onFetch={(proposal) => {
-            setProposal(proposal);
-          }}
-        />
+        {showUpdate && (
+          <CreateProposal
+            className='me-2'
+            proposalId={proposalId}
+            onCreate={(proposal) => {
+              setProposal(proposal);
+              router.replace(`${pathname}?proposal=${proposal.id}`, { scroll: false });
+            }}
+            onFetch={(proposal) => {
+              setProposal(proposal);
+            }}
+          />
+        )}
       </div>
       <Tabs.Group tabIndex={activeTabIndex}>
         {Object.entries(tabs || {}).map(([key, value]) => (

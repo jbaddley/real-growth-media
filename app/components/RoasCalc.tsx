@@ -53,7 +53,8 @@ function roasCalc({
   const totalReturn = customerValue * numCustomersPerMonth;
   const totalMarketingCommissions = totalReturn * (commissionPercentage / 100);
   const adSpendPerMonth = costPerLead * leadsPerMonth;
-  const totalMarketingInvestment = expertCostPerMonth + costPerLead * leadsPerMonth + setupFee;
+  const totalMarketingInvestment =
+    expertCostPerMonth + costPerLead * leadsPerMonth + setupFee + totalMarketingCommissions;
   const monthlyReturn = netCustomerValuePerMonth * numCustomersPerMonth;
   const monthlyMarketingCommissions = monthlyReturn * (commissionPercentage / 100);
   const monthlyReturnNet = monthlyReturn - (totalMarketingInvestment + monthlyMarketingCommissions);

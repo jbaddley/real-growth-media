@@ -5,7 +5,11 @@ interface FetcherResponse<T> {
 }
 
 export class Fetcher {
-  static get<T>(input: RequestInfo, params?: RequestInit): Promise<FetcherResponse<T>> {
+  static get<T>(input: RequestInfo, params?: RequestInit, qs?: any): Promise<FetcherResponse<T>> {
+    if (qs) {
+      const search = new URLSearchParams(qs);
+      input = `${input}?${search.toString()}`;
+    }
     return fetch(input, { method: "GET", ...params }).then((res) => res.json() as T);
   }
   static delete(input: RequestInfo, params?: RequestInit): Promise<FetcherResponse<any>> {
