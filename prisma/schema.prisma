@@ -95,9 +95,16 @@ model AdTitle {
 }
 
 model Proposals {
-  id        String  @id @default(uuid()) @db.Uuid
-  email     String
-  name      String?
-  videoUrl  String?
-  proposals Json?
+  id                 String   @id @default(uuid()) @db.Uuid
+  email              String
+  name               String
+  phone              String?
+  firstName          String?
+  lastName           String?
+  videoUrl           String?
+  typeOfHomeServices String?
+  runningAds         Boolean?
+  currentAdSpend     Int?
+  companyName        String?
+  proposals          Json?
 }
