@@ -15,3 +15,15 @@ export async function GET(req: NextRequest, { params: { id } }, res: NextRespons
     status: "success",
   });
 }
+export async function DELETE(req: NextRequest, { params: { id } }, res: NextResponse) {
+  await prisma.proposals.delete({
+    where: {
+      id,
+    },
+  });
+
+  return NextResponse.json({
+    data: null,
+    status: "success",
+  });
+}
