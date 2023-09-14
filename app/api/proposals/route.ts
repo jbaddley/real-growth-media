@@ -12,6 +12,7 @@ export async function GET(req: NextRequest, res: NextResponse) {
 }
 export async function POST(req: NextRequest, res: NextResponse) {
   const body = await req.json();
+  body.currentAdSpend = +(body.currentAdSpend || 0);
   let proposal = await prisma.proposals.findFirst({
     where: {
       email: body.email,
