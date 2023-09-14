@@ -151,6 +151,21 @@ export default function () {
     Fetcher.get(service, undefined, { name: proposal.name, email: proposal.email, watched_video: true });
   }, [proposal]);
 
+  const handleApply = useCallback(
+    (field: string, value: number) => {
+      const newTabs = { ...tabs };
+      Object.keys(newTabs).forEach((key) => {
+        if (field === "adSpend") {
+          newTabs[key].input.leadsPerMonth = Math.round(value / newTabs[key].input.costPerLead);
+        }
+        newTabs[key].input[field] = value;
+      });
+      setTabs(newTabs);
+      saveProposals(proposal, newTabs);
+    },
+    [tabs, proposal]
+  );
+
   return (
     <div className='p-2'>
       <div className='flex flex-row-reverse'>
@@ -203,9 +218,12 @@ export default function () {
         )}
       </div>
       <Tabs.Group tabIndex={activeTabIndex}>
-        {Object.entries(tabs || {}).map(([key, value]) => (
+        {Object.entries(tabs || {}).map(([key, value], i) => (
           <Tabs.Item key={key} active={key === activeTab} title={value.displayName}>
             <RoasCalc
+              onApply={handleApply}
+              active={activeTabIndex === i}
+              showUpdate={showUpdate}
               onChange={handleChange}
               onDelete={handleDelete}
               onCopy={handleCopy}

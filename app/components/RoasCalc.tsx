@@ -1,8 +1,8 @@
 "use client";
-import { Dropdown, TextInput } from "flowbite-react";
+import { Dropdown, Select, TextInput } from "flowbite-react";
 import { useCallback, useMemo, useState } from "react";
-import { FaBars } from "react-icons/fa";
-import { NumericFormat } from "react-number-format";
+import { FaBars, FaRecycle, FaReplyAll } from "react-icons/fa";
+import { NumericFormat, numericFormatter } from "react-number-format";
 
 interface ROASInput {
   costPerLead?: number;
@@ -11,7 +11,8 @@ interface ROASInput {
   netCustomerValuePerMonth?: number;
   averageCustomerLength?: number;
   expertCostPerMonth?: number;
-  commissionPercentage?: number;
+  commission?: number;
+  commissionType?: "percent" | "quantity";
   monthlyGoal?: number;
   adSpend?: number;
   setupFee?: number;
@@ -43,7 +44,8 @@ function roasCalc({
   leadsPerMonth = 0,
   netCustomerValuePerMonth = 0,
   averageCustomerLength = 0,
-  commissionPercentage = 0,
+  commission = 0,
+  commissionType = "percent",
   expertCostPerMonth = 0,
   monthlyGoal = 0,
   setupFee = 0,
@@ -51,12 +53,14 @@ function roasCalc({
   const customerValue = netCustomerValuePerMonth * averageCustomerLength;
   const numCustomersPerMonth = Math.floor((conversionRate / 100) * leadsPerMonth);
   const totalReturn = customerValue * numCustomersPerMonth;
-  const totalMarketingCommissions = totalReturn * (commissionPercentage / 100);
+  const totalMarketingCommissions =
+    commissionType === "percent" ? totalReturn * (commission / 100) : commission * numCustomersPerMonth;
   const adSpendPerMonth = costPerLead * leadsPerMonth;
   const totalMarketingInvestment =
     expertCostPerMonth + costPerLead * leadsPerMonth + setupFee + totalMarketingCommissions;
   const monthlyReturn = netCustomerValuePerMonth * numCustomersPerMonth;
-  const monthlyMarketingCommissions = monthlyReturn * (commissionPercentage / 100);
+  const monthlyMarketingCommissions =
+    commissionType === "percent" ? monthlyReturn * (commission / 100) : commission * numCustomersPerMonth;
   const monthlyReturnNet = monthlyReturn - (totalMarketingInvestment + monthlyMarketingCommissions);
   const roas = totalReturn - totalMarketingInvestment;
   const roasPercent = Math.round((roas / totalMarketingInvestment) * 100);
@@ -98,18 +102,7 @@ export const defaultInput: ROASInput = {
   netCustomerValuePerMonth: 5000,
   averageCustomerLength: 1,
   expertCostPerMonth: 0,
-  commissionPercentage: 0,
-};
-
-const getStorage = (name: string): StorageInput => {
-  const data = JSON.parse(globalThis.localStorage.getItem("pp-roas-calc") || "{}");
-  return data[name] || { input: defaultInput, displayName: name };
-};
-
-const setStorage = (name: string, input: StorageInput) => {
-  const data = JSON.parse(localStorage.getItem("pp-roas-calc") || "{}");
-  data[name] = input;
-  return localStorage.setItem("pp-roas-calc", JSON.stringify(data, null, 2));
+  commission: 0,
 };
 
 function OutputDisplay({
@@ -147,23 +140,27 @@ function OutputDisplay({
 export default function ({
   name,
   storageInputs,
-  copyNames,
   onChange,
   onCopy,
   onDelete,
+  showUpdate,
+  onApply,
+  active,
 }: {
   name: string;
   storageInputs: StorageInput;
+  showUpdate: boolean;
   copyNames: Partial<StorageInput>[];
   onChange: (name: string, storageInput: StorageInput) => void;
   onDelete: (name: string) => void;
   onCopy: (name: string) => void;
+  active: boolean;
+  onApply?: (field: string, value: number) => void;
 }) {
   const { input: roasInputs } = storageInputs;
   const roasOutputs = useMemo(() => {
-    setStorage(name, storageInputs);
     return roasCalc(roasInputs);
-  }, [storageInputs, name]);
+  }, [roasInputs, name, active]);
 
   const handleChange = (fieldName: string) => (values, e) => {
     const value = values.floatValue;
@@ -213,8 +210,96 @@ export default function ({
     onDelete(name);
   };
 
+  const applyToAll = (field: string) => () => {
+    const value = roasInputs[field];
+    onApply?.(field, value);
+  };
+
+  const revenueHeader = () => {
+    if (roasOutputs.monthlyReturnNet > 0) {
+      return (
+        <span className='text-xl'>
+          New Monthly Revenue
+          <NumericFormat
+            renderText={(value) => (
+              <p>
+                <b>{value}</b>
+              </p>
+            )}
+            thousandSeparator=','
+            prefix='$'
+            decimalScale={1}
+            value={roasOutputs.monthlyReturnNet}
+            displayType='text'
+          />
+        </span>
+      );
+    }
+    return (
+      <span className='text-xl'>
+        Total Lifetime Revenue
+        <NumericFormat
+          renderText={(value) => (
+            <p>
+              <b>{value}</b>
+            </p>
+          )}
+          thousandSeparator=','
+          prefix='$'
+          decimalScale={1}
+          value={roasOutputs.totalReturn}
+          displayType='text'
+        />
+      </span>
+    );
+  };
+
   return (
     <div style={{ maxWidth: 1200 }} className='m-4'>
+      <div className='mb-8 columns-4'>
+        <span className='text-xl'>
+          Marketing Cost Per Month
+          <NumericFormat
+            thousandSeparator=','
+            decimalScale={1}
+            renderText={(value) => (
+              <p>
+                <b>{value}</b>
+              </p>
+            )}
+            prefix='$'
+            value={roasOutputs.totalMarketingInvestment}
+            displayType='text'
+          />
+        </span>
+        {revenueHeader()}
+        <span className='text-xl'>
+          ROAS X
+          <NumericFormat
+            renderText={(value) => (
+              <p>
+                <b>{value}</b>
+              </p>
+            )}
+            decimalScale={1}
+            value={roasOutputs.roasX}
+            displayType='text'
+          />
+        </span>
+        <span className='text-xl'>
+          New Customers Per Month
+          <NumericFormat
+            renderText={(value) => (
+              <p>
+                <b>{value}</b>
+              </p>
+            )}
+            decimalScale={0}
+            value={roasOutputs.numCustomersPerMonth}
+            displayType='text'
+          />
+        </span>
+      </div>
       <div className='flex space-x-4'>
         <div className='flex-grow'>
           <TextInput value={storageInputs.displayName} onChange={handleChangeDisplayName} />
@@ -230,25 +315,32 @@ export default function ({
         <div className='my-4 columns-3'>
           <div>
             <label>Net Customer Value Per Month</label>
-            <NumericFormat
-              prefix={"$"}
-              customInput={TextInput}
-              thousandSeparator=','
-              value={roasInputs.netCustomerValuePerMonth}
-              name='netCustomerValuePerMonth'
-              onValueChange={handleChange("netCustomerValuePerMonth")}
-            />
+            <div className='flex'>
+              <NumericFormat
+                prefix={"$"}
+                customInput={TextInput}
+                thousandSeparator=','
+                value={roasInputs.netCustomerValuePerMonth}
+                name='netCustomerValuePerMonth'
+                onValueChange={handleChange("netCustomerValuePerMonth")}
+              />
+              <FaReplyAll className='m-2 opacity-25' onClick={applyToAll("netCustomerValuePerMonth")} />
+            </div>
           </div>
           <div>
             <label>Average Customer Length in Months</label>
-            <NumericFormat
-              customInput={TextInput}
-              thousandSeparator=','
-              value={roasInputs.averageCustomerLength}
-              name='averageCustomerLength'
-              onValueChange={handleChange("averageCustomerLength")}
-              suffix={" months"}
-            />
+
+            <div className='flex'>
+              <NumericFormat
+                customInput={TextInput}
+                thousandSeparator=','
+                value={roasInputs.averageCustomerLength}
+                name='averageCustomerLength'
+                onValueChange={handleChange("averageCustomerLength")}
+                suffix={" months"}
+              />
+              <FaReplyAll className='m-2 opacity-25' onClick={applyToAll("averageCustomerLength")} />
+            </div>
           </div>
           <div>
             <label>Net Average Lifetime Customer Value</label>
@@ -267,24 +359,31 @@ export default function ({
         <div className='my-4 columns-3'>
           <div>
             <label>Cost Per Lead</label>
-            <NumericFormat
-              thousandSeparator=','
-              prefix={"$"}
-              customInput={TextInput}
-              value={roasInputs.costPerLead}
-              name='costPerLead'
-              onValueChange={handleUpdateCostPerLead}
-            />
+
+            <div className='flex'>
+              <NumericFormat
+                thousandSeparator=','
+                prefix={"$"}
+                customInput={TextInput}
+                value={roasInputs.costPerLead}
+                name='costPerLead'
+                onValueChange={handleUpdateCostPerLead}
+              />
+              <FaReplyAll className='m-2 opacity-25' onClick={applyToAll("costPerLead")} />
+            </div>
           </div>
           <div>
             <label>Conversion Rate</label>
-            <NumericFormat
-              customInput={TextInput}
-              value={roasInputs.conversionRate}
-              name='conversionRate'
-              onValueChange={handleChange("conversionRate")}
-              suffix='%'
-            />
+            <div className='flex'>
+              <NumericFormat
+                customInput={TextInput}
+                value={roasInputs.conversionRate}
+                name='conversionRate'
+                onValueChange={handleChange("conversionRate")}
+                suffix='%'
+              />
+              <FaReplyAll className='m-2 opacity-25' onClick={applyToAll("conversionRate")} />
+            </div>
           </div>
           <div>
             <label>Number of Leads Per Month</label>
@@ -296,67 +395,94 @@ export default function ({
             />
           </div>
         </div>
-        <div className='my-4 columns-4'>
-          <div>
-            <label>Ad Implementation Cost Per Month</label>
-            <NumericFormat
-              prefix={"$"}
-              customInput={TextInput}
-              thousandSeparator=','
-              value={roasInputs.expertCostPerMonth}
-              name='expertCostPerMonth'
-              onValueChange={handleChange("expertCostPerMonth")}
-            />
-          </div>
-          <div>
-            <label>Setup Fee</label>
-            <NumericFormat
-              prefix={"$"}
-              customInput={TextInput}
-              thousandSeparator=','
-              value={roasInputs.setupFee}
-              name='setupFee'
-              onValueChange={handleChange("setupFee")}
-            />
-          </div>
-          <div>
-            <label>Commission Percentage</label>
-            <NumericFormat
-              suffix={"%"}
-              customInput={TextInput}
-              value={roasInputs.commissionPercentage}
-              name='commissionPercentage'
-              onValueChange={handleChange("commissionPercentage")}
-            />
-          </div>
+        <div className='my-4 columns-3'>
           <div>
             <label>Ad Spend</label>
-            <NumericFormat
-              prefix={"$"}
-              customInput={TextInput}
-              value={roasInputs.adSpend || roasOutputs.adSpendPerMonth}
-              name='adSpend'
-              onValueChange={handleUpdateAdSpend}
-            />
+            <div className='flex'>
+              <NumericFormat
+                prefix={"$"}
+                customInput={TextInput}
+                value={roasInputs.adSpend || roasOutputs.adSpendPerMonth}
+                name='adSpend'
+                onValueChange={handleUpdateAdSpend}
+              />
+              <FaReplyAll className='m-2 opacity-25' onClick={applyToAll("adSpend")} />
+            </div>
           </div>
+          <div>
+            <label>Monthly Revenue Goal</label>
+
+            <div className='flex'>
+              <NumericFormat
+                customInput={TextInput}
+                prefix={"$"}
+                value={roasInputs.monthlyGoal}
+                thousandSeparator=','
+                name='monthlyGoal'
+                onValueChange={handleChange("monthlyGoal")}
+              />
+              <FaReplyAll className='m-2 opacity-25' onClick={applyToAll("monthlyGoal")} />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className='my-4 columns-4'>
+        <div>
+          <label>Retainer Per Month</label>
+          <NumericFormat
+            disabled={!showUpdate}
+            prefix={"$"}
+            customInput={TextInput}
+            thousandSeparator=','
+            value={roasInputs.expertCostPerMonth}
+            name='expertCostPerMonth'
+            onValueChange={handleChange("expertCostPerMonth")}
+          />
+        </div>
+        <div>
+          <label>Setup Fee</label>
+          <NumericFormat
+            disabled={!showUpdate}
+            prefix={"$"}
+            customInput={TextInput}
+            thousandSeparator=','
+            value={roasInputs.setupFee}
+            name='setupFee'
+            onValueChange={handleChange("setupFee")}
+          />
+        </div>
+        <div>
+          <label>Commission Type</label>
+          <Select
+            value={roasInputs.commissionType}
+            disabled={!showUpdate}
+            onChange={({ target: { value } }) => {
+              onChange(name, {
+                ...storageInputs,
+                input: { ...storageInputs.input, commissionType: value as "percent" | "quantity" },
+              });
+            }}
+          >
+            <option value='percent'>Percent</option>
+            <option value='quantity'>Dollar Amount</option>
+          </Select>
+        </div>
+        <div>
+          <label>Commission</label>
+          <NumericFormat
+            disabled={!showUpdate}
+            suffix={roasInputs.commissionType === "quantity" ? "" : "%"}
+            prefix={roasInputs.commissionType === "quantity" ? "$" : ""}
+            customInput={TextInput}
+            value={roasInputs.commission}
+            name='commission'
+            onValueChange={handleChange("commission")}
+          />
         </div>
       </div>
       <div>
         <div>
-          <div className='columns-2'>
-            <p className='text-right'>Monthly Revenue Goal:</p>
-            <NumericFormat
-              customInput={TextInput}
-              prefix={"$"}
-              value={roasInputs.monthlyGoal}
-              thousandSeparator=','
-              name='monthlyGoal'
-              onValueChange={handleChange("monthlyGoal")}
-            />
-          </div>
           <OutputDisplay label='Number of Months to Reach Goal' prefix='' value={roasOutputs.monthsToReachGoal} />
-        </div>
-        <div>
           <OutputDisplay label='Net Gain in New Lifetime Revenue' prefix='$' value={roasOutputs.totalReturn} />
           <OutputDisplay
             label='Monthly Cost of Commissions'
