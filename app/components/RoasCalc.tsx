@@ -12,7 +12,7 @@ interface ROASInput {
   averageCustomerLength?: number;
   expertCostPerMonth?: number;
   commission?: number;
-  commissionType?: "percent" | "quantity";
+  commissionType?: "percent" | "quantity" | "plus-ads";
   monthlyGoal?: number;
   adSpend?: number;
   setupFee?: number;
@@ -36,6 +36,7 @@ interface ROASOutput {
   adSpendPerMonth?: number;
   leadsPerMonth?: number;
   monthsToReachGoal?: number;
+  agencyProfitPerMonth?: number;
 }
 
 function roasCalc({
@@ -50,17 +51,38 @@ function roasCalc({
   monthlyGoal = 0,
   setupFee = 0,
 }: ROASInput): ROASOutput {
+  let totalMarketingCommissions = 0;
+  let monthlyMarketingCommissions = 0;
+  let adSpendPerMonth = costPerLead * leadsPerMonth;
+  let totalMarketingInvestment = 0;
+  let agencyProfitPerMonth = 0;
   const customerValue = netCustomerValuePerMonth * averageCustomerLength;
   const numCustomersPerMonth = Math.floor((conversionRate / 100) * leadsPerMonth);
   const totalReturn = customerValue * numCustomersPerMonth;
-  const totalMarketingCommissions =
-    commissionType === "percent" ? totalReturn * (commission / 100) : commission * numCustomersPerMonth;
-  const adSpendPerMonth = costPerLead * leadsPerMonth;
-  const totalMarketingInvestment =
-    expertCostPerMonth + costPerLead * leadsPerMonth + setupFee + totalMarketingCommissions;
   const monthlyReturn = netCustomerValuePerMonth * numCustomersPerMonth;
-  const monthlyMarketingCommissions =
-    commissionType === "percent" ? monthlyReturn * (commission / 100) : commission * numCustomersPerMonth;
+
+  switch (commissionType) {
+    case "plus-ads":
+      totalMarketingCommissions = commission * numCustomersPerMonth;
+      monthlyMarketingCommissions = commission * numCustomersPerMonth;
+      totalMarketingInvestment = expertCostPerMonth + setupFee + totalMarketingCommissions;
+      agencyProfitPerMonth = expertCostPerMonth + monthlyMarketingCommissions - adSpendPerMonth;
+      break;
+    case "quantity":
+      totalMarketingCommissions = commission * numCustomersPerMonth;
+      monthlyMarketingCommissions = commission * numCustomersPerMonth;
+      totalMarketingInvestment = expertCostPerMonth + adSpendPerMonth + setupFee + totalMarketingCommissions;
+      agencyProfitPerMonth = expertCostPerMonth + monthlyMarketingCommissions;
+      break;
+    case "percent":
+    default:
+      totalMarketingCommissions = totalReturn * (commission / 100);
+      monthlyMarketingCommissions = monthlyReturn * (commission / 100);
+      totalMarketingInvestment = expertCostPerMonth + adSpendPerMonth + setupFee + totalMarketingCommissions;
+      agencyProfitPerMonth = expertCostPerMonth + monthlyMarketingCommissions;
+      break;
+  }
+
   const monthlyReturnNet = monthlyReturn - (totalMarketingInvestment + monthlyMarketingCommissions);
   const roas = totalReturn - totalMarketingInvestment;
   const roasPercent = Math.round((roas / totalMarketingInvestment) * 100);
@@ -69,6 +91,7 @@ function roasCalc({
   const payBackPeriod = Math.ceil(costPerCustomerAcquisition / netCustomerValuePerMonth);
   const profitPeriod = averageCustomerLength - payBackPeriod;
   const monthsToReachGoal = monthlyGoal / (monthlyReturn - monthlyMarketingCommissions);
+
   return {
     totalMarketingInvestment,
     monthsToReachGoal,
@@ -86,6 +109,7 @@ function roasCalc({
     monthlyReturn,
     monthlyMarketingCommissions,
     monthlyReturnNet,
+    agencyProfitPerMonth,
   };
 }
 
@@ -465,14 +489,15 @@ export default function ({
           >
             <option value='percent'>Percent</option>
             <option value='quantity'>Dollar Amount</option>
+            <option value='plus-ads'>Agency Pays Ads</option>
           </Select>
         </div>
         <div>
           <label>Commission</label>
           <NumericFormat
             disabled={!showUpdate}
-            suffix={roasInputs.commissionType === "quantity" ? "" : "%"}
-            prefix={roasInputs.commissionType === "quantity" ? "$" : ""}
+            suffix={["quantity", "plus-ads"].includes(roasInputs.commissionType) ? "" : "%"}
+            prefix={["quantity", "plus-ads"].includes(roasInputs.commissionType) ? "$" : ""}
             customInput={TextInput}
             value={roasInputs.commission}
             name='commission'
@@ -513,6 +538,9 @@ export default function ({
             value={roasOutputs.profitPeriod}
           />
           <OutputDisplay label='Customer Acquistion Cost' prefix='$' value={roasOutputs.costPerCustomerAcquisition} />
+          {showUpdate && (
+            <OutputDisplay label='Agency Profit Per Month' prefix='$' value={roasOutputs.agencyProfitPerMonth} />
+          )}
         </div>
       </div>
     </div>
