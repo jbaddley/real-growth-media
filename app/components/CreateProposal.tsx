@@ -63,6 +63,10 @@ export default function CreateProposal({
               <label>Video Url</label>
               <TextInput {...register("videoUrl")} />
             </div>
+            <div>
+              <label>Image Url</label>
+              <TextInput {...register("imageUrl")} />
+            </div>
             <button ref={submitButton} style={{ visibility: "hidden" }} type='submit'>
               OK
             </button>

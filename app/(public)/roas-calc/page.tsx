@@ -37,6 +37,7 @@ export default function () {
   const [openProposal, setOpenProposal] = useState<boolean>(false);
   const [showUpdate, setShowUpdate] = useState<boolean>(false);
   const [showName, setName] = useState<boolean>(false);
+  const downloadLink = useRef<HTMLAnchorElement>(null);
 
   useHotkeys([
     ["ctrl+U", () => setShowUpdate(!showUpdate)],
@@ -168,6 +169,15 @@ export default function () {
     [tabs, proposal]
   );
 
+  const handleCopyProposalTo = useCallback(
+    (p: Proposals) => {
+      return () => {
+        saveProposals(p, { ...tabs });
+      };
+    },
+    [tabs, proposal]
+  );
+
   return (
     <div className='p-2'>
       <div className='flex flex-row-reverse'>
@@ -178,11 +188,23 @@ export default function () {
         <Button className='me-2' color='purple' onClick={onWatch}>
           Proposal Video
         </Button>
-        <Button className='me-2' color='purple' onClick={onWatch}>
-          Proposal PDF
-        </Button>
+        {proposal?.imageUrl && (
+          <Button className='me-2' color='purple' onClick={() => downloadLink.current.click()}>
+            Proposal Download
+            <a className='hidden' ref={downloadLink} href={proposal?.imageUrl} target='_blank'>
+              DOWNLOAD
+            </a>
+          </Button>
+        )}
         {showUpdate && (
           <>
+            <Dropdown label={"Copy Proposal To"}>
+              {proposals.map((p) => (
+                <Dropdown.Item onClick={handleCopyProposalTo(p)} key={p.id}>
+                  {p.name}
+                </Dropdown.Item>
+              ))}
+            </Dropdown>
             <CreateProposal
               className='me-2'
               proposal={proposal}

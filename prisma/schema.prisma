@@ -102,6 +102,7 @@ model Proposals {
   firstName          String?
   lastName           String?
   videoUrl           String?
+  imageUrl           String?
   typeOfHomeServices String?
   runningAds         String?
   currentAdSpend     Int?
