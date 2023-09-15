@@ -36,10 +36,12 @@ export default function () {
   const [saving, setSaving] = useState<boolean>(false);
   const [openProposal, setOpenProposal] = useState<boolean>(false);
   const [showUpdate, setShowUpdate] = useState<boolean>(false);
+  const [showName, setName] = useState<boolean>(false);
 
   useHotkeys([
     ["ctrl+U", () => setShowUpdate(!showUpdate)],
     ["ctrl+S", () => saveProposals(proposal, tabs)],
+    ["ctrl+N", () => setName(!showName)],
   ]);
 
   const { data: proposals = [] } = useSWR(["proposals"], async () => {
@@ -176,6 +178,9 @@ export default function () {
         <Button className='me-2' color='purple' onClick={onWatch}>
           Proposal Video
         </Button>
+        <Button className='me-2' color='purple' onClick={onWatch}>
+          Proposal PDF
+        </Button>
         {showUpdate && (
           <>
             <CreateProposal
@@ -200,7 +205,7 @@ export default function () {
               }}
             />
             <div className='me-2'>
-              <Dropdown label={proposal?.name || "Select a Proposal"}>
+              <Dropdown label={showName ? proposal?.name || "Select a Proposal" : "Proposals"}>
                 {proposals.map((p) => (
                   <Dropdown.Item
                     onClick={() => {

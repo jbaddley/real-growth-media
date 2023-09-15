@@ -83,7 +83,7 @@ function roasCalc({
       break;
   }
 
-  const monthlyReturnNet = monthlyReturn - (totalMarketingInvestment + monthlyMarketingCommissions);
+  const monthlyReturnNet = monthlyReturn - totalMarketingInvestment;
   const roas = totalReturn - totalMarketingInvestment;
   const roasPercent = Math.round((roas / totalMarketingInvestment) * 100);
   const costPerCustomerAcquisition = totalMarketingInvestment / numCustomersPerMonth;
@@ -243,7 +243,7 @@ export default function ({
     if (roasOutputs.monthlyReturnNet > 0) {
       return (
         <span className='text-xl'>
-          New Monthly Revenue
+          Net Monthly Revenue
           <NumericFormat
             renderText={(value) => (
               <p>
@@ -338,7 +338,7 @@ export default function ({
       <div className='mb-4'>
         <div className='my-4 columns-3'>
           <div>
-            <label>Net Customer Value Per Month</label>
+            <label>Net Customer Value Per Transaction</label>
             <div className='flex'>
               <NumericFormat
                 prefix={"$"}
@@ -382,7 +382,7 @@ export default function ({
 
         <div className='my-4 columns-3'>
           <div>
-            <label>Cost Per Lead</label>
+            <label>Cost Per Booking</label>
 
             <div className='flex'>
               <NumericFormat
@@ -410,7 +410,7 @@ export default function ({
             </div>
           </div>
           <div>
-            <label>Number of Leads Per Month</label>
+            <label>Number of Bookings Per Month</label>
             <NumericFormat
               customInput={TextInput}
               value={roasInputs.leadsPerMonth}
@@ -453,56 +453,69 @@ export default function ({
       <div className='my-4 columns-4'>
         <div>
           <label>Retainer Per Month</label>
-          <NumericFormat
-            disabled={!showUpdate}
-            prefix={"$"}
-            customInput={TextInput}
-            thousandSeparator=','
-            value={roasInputs.expertCostPerMonth}
-            name='expertCostPerMonth'
-            onValueChange={handleChange("expertCostPerMonth")}
-          />
+
+          <div className='flex'>
+            <NumericFormat
+              disabled={!showUpdate}
+              prefix={"$"}
+              customInput={TextInput}
+              thousandSeparator=','
+              value={roasInputs.expertCostPerMonth}
+              name='expertCostPerMonth'
+              onValueChange={handleChange("expertCostPerMonth")}
+            />
+            <FaReplyAll className='m-2 opacity-25' onClick={applyToAll("expertCostPerMonth")} />
+          </div>
         </div>
         <div>
           <label>Setup Fee</label>
-          <NumericFormat
-            disabled={!showUpdate}
-            prefix={"$"}
-            customInput={TextInput}
-            thousandSeparator=','
-            value={roasInputs.setupFee}
-            name='setupFee'
-            onValueChange={handleChange("setupFee")}
-          />
+          <div className='flex'>
+            <NumericFormat
+              disabled={!showUpdate}
+              prefix={"$"}
+              customInput={TextInput}
+              thousandSeparator=','
+              value={roasInputs.setupFee}
+              name='setupFee'
+              onValueChange={handleChange("setupFee")}
+            />
+            <FaReplyAll className='m-2 opacity-25' onClick={applyToAll("setupFee")} />
+          </div>
         </div>
         <div>
           <label>Commission Type</label>
-          <Select
-            value={roasInputs.commissionType}
-            disabled={!showUpdate}
-            onChange={({ target: { value } }) => {
-              onChange(name, {
-                ...storageInputs,
-                input: { ...storageInputs.input, commissionType: value as "percent" | "quantity" },
-              });
-            }}
-          >
-            <option value='percent'>Percent</option>
-            <option value='quantity'>Dollar Amount</option>
-            <option value='plus-ads'>Agency Pays Ads</option>
-          </Select>
+          <div className='flex'>
+            <Select
+              value={roasInputs.commissionType}
+              disabled={!showUpdate}
+              onChange={({ target: { value } }) => {
+                onChange(name, {
+                  ...storageInputs,
+                  input: { ...storageInputs.input, commissionType: value as "percent" | "quantity" },
+                });
+              }}
+            >
+              <option value='percent'>Percent</option>
+              <option value='quantity'>Dollar Amount</option>
+              <option value='plus-ads'>Agency Pays Ads</option>
+            </Select>
+            <FaReplyAll className='m-2 opacity-25' onClick={applyToAll("commissionType")} />
+          </div>
         </div>
         <div>
           <label>Commission</label>
-          <NumericFormat
-            disabled={!showUpdate}
-            suffix={["quantity", "plus-ads"].includes(roasInputs.commissionType) ? "" : "%"}
-            prefix={["quantity", "plus-ads"].includes(roasInputs.commissionType) ? "$" : ""}
-            customInput={TextInput}
-            value={roasInputs.commission}
-            name='commission'
-            onValueChange={handleChange("commission")}
-          />
+          <div className='flex'>
+            <NumericFormat
+              disabled={!showUpdate}
+              suffix={["quantity", "plus-ads"].includes(roasInputs.commissionType) ? "" : "%"}
+              prefix={["quantity", "plus-ads"].includes(roasInputs.commissionType) ? "$" : ""}
+              customInput={TextInput}
+              value={roasInputs.commission}
+              name='commission'
+              onValueChange={handleChange("commission")}
+            />
+            <FaReplyAll className='m-2 opacity-25' onClick={applyToAll("commission")} />
+          </div>
         </div>
       </div>
       <div>
